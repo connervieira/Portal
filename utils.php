@@ -312,7 +312,7 @@ function get_location_storage_usage_total($user, $user_database) {
 }
 
 // This function returns the GPS location track file storage usage for a particular vehicle.
-function get_location_storage_usage_total($vehicle, $user_database) {
+function get_location_storage_usage_vehicle($vehicle, $user_database) {
     $total_usage = 0; // This is a placeholder that will be incremented to keep track of the total disk usage.
     $gps_track_files = list_gps_track_files($vehicle, $user_database);
     foreach ($gps_track_files as $file) {

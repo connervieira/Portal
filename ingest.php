@@ -1,5 +1,6 @@
 <?php
 // This page ingests information received from Predator clients.
+// Clients expect anything returned from this endpoint to be valid JSON.
 
 include "./config.php";
 include "./utils.php";
@@ -12,7 +13,7 @@ $user_database = load_database("users");
 $associated_user = vehicle_to_user($_POST["identifier"], $user_database);
 
 if ($associated_user == false) {
-    echo "{\"success\": false, \"reason\": \"Permission denied\"}";
+    echo "{\"success\": false, \"type\": \"client\", \"code\": \"permission_denied\", \"reason\": \"Permission denied\"}";
     exit();
 } else {
     // Handle image data:
@@ -31,14 +32,14 @@ if ($associated_user == false) {
                 }
                 file_put_contents($image_location, $image_data);
             } else {
-                echo "{\"success\": false, \"reason\": \"Invalid image data.\"}";
+                echo "{\"success\": false, \"type\": \"client\", \"code\": \"image_invalid\", \"reason\": \"Invalid image data.\"}";
                 exit();
             }
         }
     }
 
     // Handle GPS data:
-    $location_storage_usage = get_location_storage_usage($_POST["identifier"], $user_database);
+    $location_storage_usage = get_location_storage_usage_vehicle($_POST["identifier"], $user_database);
     $max_storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
     if ($location_storage_usage >= $max_storage_capacity) { // Check to see if the storage capacity is full.
         if ($portal_config["storage"]["gps_tracks"]["auto_delete"]) { // Check to see if auto-delete is enabled.
@@ -47,31 +48,31 @@ if ($associated_user == false) {
                 $oldest_file = $gps_track_files[0];
                 if (file_exists($oldest_file)) { // Check to make sure the oldest file actually exists.
                     if (unlink($oldest_file) == false) { // Check to see if the oldest file failed to be deleted.
-                        echo "{\"success\": false, \"reason\": \"Failed to delete the oldest GPS track file. This may indicate a server-side bug, so consider contacting V0LT.\"}";
+                        echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"Failed to delete the oldest GPS track file. This may indicate a server-side bug, so consider contacting V0LT.\"}";
                         exit();
                     }
                 } else {
-                    echo "{\"success\": false, \"reason\": \"The oldest GPS track file could not be removed. This may indicate a server-side bug, so consider contacting V0LT.\"}";
+                    echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"The oldest GPS track file could not be removed. This may indicate a server-side bug, so consider contacting V0LT.\"}";
                     exit();
                 }
             } else {
-                echo "{\"success\": false, \"reason\": \"There are not enough GPS track files that can be removed to clear up sufficient storage. This may indicate a server-side bug, so consider contacting V0LT.\"}";
+                echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"There are not enough GPS track files that can be removed to clear up sufficient storage. This may indicate a server-side bug, so consider contacting V0LT.\"}";
                 exit();
             }
         } else {
-            echo "{\"success\": false, \"reason\": \"There is no available capacity to store this datapoint.\"}";
+            echo "{\"success\": false, \"type\": \"server\", \"code\": \"insufficient_space\", \"reason\": \"There is no available capacity to store this datapoint.\"}";
             exit();
         }
     }
     if (is_valid_timezone_offset($data["system"]["timezone"])) {
         $client_timezone = $data["system"]["timezone"];
     } else {
-        echo "{\"success\": false, \"reason\": \"The timezone offset is invalid.\"}";
+        echo "{\"success\": false, \"type\": \"client\", \"code\": \"timezone_offset_invalid\", \"reason\": \"The timezone offset is invalid.\"}";
         exit();
     }
     $point_time = intval($data["location"]["time"]);
     if (time() - $point_time >= 60*60*24*365*5 or time() - $point_time <= -1*60*60*25*5) { // Check to see if the timestamp is more than 5 years into the past, or more than 5 days into the future.
-        echo "{\"success\": false, \"reason\": \"Invalid timestamp\"}";
+        echo "{\"success\": false, \"type\": \"client\", \"code\": \"timestamp_invalid\", \"reason\": \"Invalid timestamp\"}";
         exit();
     }
     $track_location = join_paths([$portal_config["storage"]["gps_tracks"]["location"], $associated_user, $_POST["identifier"], gmdate("Y-m-d", $point_time) . " UTC.json"]);
@@ -102,7 +103,7 @@ if ($associated_user == false) {
         file_put_contents($track_location, json_encode($gps_track));
         echo "{\"success\": true}";
     } else {
-        echo "{\"success\": false, \"reason\": \"The track file could not be created.\"}";
+        echo "{\"success\": false, \"type\": \"server\", \"code\": \"trackfile_creation_failed\", \"reason\": \"The track file could not be created.\"}";
         exit();
     }
 }
