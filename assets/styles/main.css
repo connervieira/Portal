@@ -1,0 +1,176 @@
+body {
+    font-family: LatoWebMedium, Helvetica, Arial;
+}
+
+h1, h2, h3, h4, h5, h6 { margin-top: 5px; margin-bottom: 5px; }
+
+h1 { font-size: 3rem; }
+h2 { font-size: 2.5rem; }
+h3 { font-size: 2rem; }
+h4 { font-size: 1.6rem; }
+h5 { font-size: 1.4rem; }
+h6 { font-size: 1.2rem; }
+
+b {
+    font-family: LatoWebBold, Helvetica, Arial;
+}
+
+select, input:not([type="submit"]) {
+    border-radius: 10px;
+    padding: 5px;
+    color: white;
+    background: black;
+    width: 200px;
+}
+
+body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 2%;
+    padding-right: 2%;
+    text-align: center;
+}
+
+a {
+    color: inherit;
+    text-decoration: underline;
+    font-family: LatoWebBold, Helvetica, Arial;
+}
+
+hr {
+    margin-top:30px;
+    margin-bottom:30px;
+}
+
+.button {
+    font-family: inherit;
+    font-size: inherit;
+    text-decoration: underline;
+    margin: 5px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background: #333333;
+    color: white;
+}
+
+.navbar {
+    width: 100%;
+    text-align: left;
+}
+.navbarleft {
+    width: 70%;
+    text-align: left;
+    float: left;
+}
+.navbarright {
+    width: 30%;
+    text-align: right;
+    float: right;
+}
+
+.widget {
+    height: 250px;
+    width: 250px;
+    background: #222222;
+    border-radius: 20px;
+    color: white;
+    padding: 0px;
+    margin: 0.25%;
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    flex-flow: column wrap;
+    overflow: hidden;
+}
+.widget p {
+    padding: 0px;
+    margin: 0px;
+}
+.widget img {
+    border-radius: 20px;
+    border: white 2px solid;
+    width: 92%;
+}
+.widget-title {
+    opacity: 0.7;
+}
+.vertically_centered {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    width: 100%;
+}
+
+.buffer {
+    margin-bottom: 20px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5%;
+    padding-right: 5%;
+    border-radius: 15px;
+    background-color: #99999933;
+}
+.list {
+    text-align: left;
+}
+.error { color: #ff0000; }
+.warning { color: #ddbb00; }
+
+
+.hidden {
+    padding: 5px;
+    border-radius: 5px;
+    background: #dddddd;
+    color: #dddddd;
+    transition: color 0.0s ease;
+}
+.hidden:hover {
+    color: #000000;
+    transition: color 0.5s ease;
+}
+
+.pulse {
+    animation: pulse-animation 0.75s ease-in-out 2 forwards;
+}
+@keyframes pulse-animation {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+
+p img {
+    margin-top: 10px;
+    height: 30px;
+}
+
+.telemetry_table {
+    margin-left: auto;
+    margin-right: auto;
+}
+.telemetry_table .left {
+    text-align: left;
+    padding-left: 5px;
+}
+.telemetry_table .right {
+    text-align: right;
+}
+.telemetry_table img {
+    text-align: right;
+    height: 30px;
+}
+
+.vehicle_card {
+    padding: 5px;
+    background: #222222;
+    border-radius: 15px;
+    margin: 5px;
+    color: white;
+    width: auto;
+}
