@@ -71,6 +71,7 @@ include "./databases.php";
 
             <hr>
             <div id="widgets">
+                <a class="button" href="widgetsmanage.php">Manage Widgets</a><br><br>
                 <?php
                 include "./widgets.php";
                 ?>

@@ -6,7 +6,7 @@ include "./config.php";
 include "./utils.php";
 include "./databases.php";
 
-$received_data = strval($_POST["data"]); // Get the submitted image data.
+$received_data = strval($_POST["data"]); // Get the submitted data.
 $data = json_decode($received_data, true); // Decode the JSON data received.
 
 $user_database = load_database("users");
@@ -16,21 +16,31 @@ if ($associated_user == false) {
     echo "{\"success\": false, \"type\": \"client\", \"code\": \"permission_denied\", \"reason\": \"Permission denied\"}";
     exit();
 } else {
+    // TODO: Check to see if it has been at least 10 seconds since the last submission.
+
     // Handle image data:
     if (in_array("image", array_keys($data))) { // Check to see if there is image data associated with this submission.
-        // TODO: Check to see if it has been at least 10 seconds since the last image submission.
         foreach (array_keys($data["image"]) as $image) {
+            if ($image !== preg_replace("/[^a-zA-Z0-9 \-_]/", "", $image) or strlen($image) > 30) { // Check to see if the capture device has any disallowed characters.
+                echo "{\"success\": false, \"type\": \"client\", \"code\": \"image_device_invalid\", \"reason\": \"One or more capture device names was invalid. Capture device names must be less than 30 characters, and only contain plain text characters.\"}";
+                exit();
+            }
             $image_data = base64_decode($data["image"][$image]); // Decode the image from the received data.
 
             $mime_type = finfo_buffer(finfo_open(), $image_data, FILEINFO_MIME_TYPE);
 
             if (strtolower($mime_type) == "image/jpeg") { // Check to see if this image is a JPG.
-                // TODO: Validate that this image is smaller than a certain size.
-                $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $associated_user, $_POST["identifier"], $image . ".jpg"]);
-                if (is_dir(dirname($image_location)) == false) { // Check to see if the volatile storage directory needs to be initialized.
-                    mkdir(dirname($image_location), 0777, true);
+                $image_size_mb = strlen($image_data) * 1024 * 1024; // Calculate this image's size in megabytes.
+                if ($image_size_mb <= 10) { // Validate that this image is less than a certain number of megabytes.
+                    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $associated_user, $_POST["identifier"], $image . ".jpg"]);
+                    if (is_dir(dirname($image_location)) == false) { // Check to see if the volatile storage directory needs to be initialized.
+                        mkdir(dirname($image_location), 0777, true);
+                    }
+                    file_put_contents($image_location, $image_data);
+                } else {
+                    echo "{\"success\": false, \"type\": \"client\", \"code\": \"image_invalid\", \"reason\": \"The submitted image exceeds the maximum allowed size.\"}";
+                    exit();
                 }
-                file_put_contents($image_location, $image_data);
             } else {
                 echo "{\"success\": false, \"type\": \"client\", \"code\": \"image_invalid\", \"reason\": \"Invalid image data.\"}";
                 exit();

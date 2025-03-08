@@ -289,7 +289,7 @@ function calculate_vehicle_distance_total($user, $days, $user_database) {
 // This function returns the most recent image for a given vehicle and camera encoded in base64.
 function fetch_camera_preview($vehicle, $user, $device) {
     global $portal_config;
-    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $user, $vehicle, $device. ".jpg"]);
+    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $user, $vehicle, $device . ".jpg"]);
     if (file_exists($image_location)) {
         $image_data = "data:image/jpg;base64," . base64_encode(file_get_contents($image_location));
         return $image_data;
@@ -319,5 +319,15 @@ function get_location_storage_usage_vehicle($vehicle, $user_database) {
         $total_usage += filesize($file);
     }
     return $total_usage;
+}
+
+
+
+// This function translates a widget type to a human-friendly title ("vehicle_count" -> "Vehicle Count").
+function widget_type_to_name($type) {
+    $words = explode("_", $type);
+    $title = implode(" ", $words);
+    $capitalized = ucwords($title);
+    return $capitalized;
 }
 ?>

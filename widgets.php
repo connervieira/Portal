@@ -1,4 +1,9 @@
 <?php
+// Note to developers: To implement new widgets, they must be added to the following files:
+// 1. `widgets.php` (this file).
+// 2. `widgetsmanage.php` (the starting point for users editing/deleting/creating widgets)
+// 3. `widgetscreate.php` (the endpoint used by users to add widgets)
+
 include "./config.php";
 
 include $portal_config["auth"]["provider"]["core"];
@@ -31,7 +36,7 @@ if (sizeof($user_database[$username]["widgets"]) > 0) { // Check to see if this 
             echo "<p style=\"font-size: 4rem\">" . sizeof($user_database[$username]["vehicles"]) . "</p>";
             echo "<p class=\"widget-title\">vehicles tracked</p>";
             echo "</div></div>";
-        } else if ($widget["type"] == "vehicles_online" or $widget["type"] == "vehicles_active") { // Displays a list of vehicles that have uploaded information recently (even if they are not moving).
+        } else if ($widget["type"] == "vehicles_online" or $widget["type"] == "vehicles_active") { // Displays a list of vehicles that have uploaded information recently.
             echo "<div class=\"widget\"><div class=\"vertically_centered\">";
             if ($widget["type"] == "vehicles_active") { // Displays a list of actively moving vehicles.
                 echo "<p class=\"widget-title\">active vehicles</p>";
@@ -92,8 +97,12 @@ if (sizeof($user_database[$username]["widgets"]) > 0) { // Check to see if this 
             echo "<p style=\"font-size: 2rem\">" . round($vehicle_distance/100)/10 . "km</p>";
             echo "<p class=\"widget-title\">past " . $widget["interval"] . " days</p>";
             echo "</div></div>";
-        } else if ($widget["type"] == "storage") {
-            // TODO: Display the GPS track location storage usage.
+        } else if ($widget["type"] == "storage_total") {
+            // TODO: Display the total GPS track location storage usage.
+        } else if ($widget["type"] == "storage_largest") {
+            // TODO: Display the GPS track location storage usage for the vehicle that is closest to full.
+        } else if ($widget["type"] == "storage_vehicle") {
+            // TODO: Display the GPS track location storage usage for a specific vehicle.
         }
     }
 } else {

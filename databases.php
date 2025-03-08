@@ -47,7 +47,7 @@ if (!function_exists("load_database")) {
             lock_file($database_path);
             $database_file_contents = file_get_contents($database_path);
             unlock_file($database_path);
-            $database = json_decode(file_get_contents($database_path), true); // Load the database from the disk.
+            $database = json_decode($database_file_contents, true); // Load the database from the disk.
             return $database;
         } else {
             echo "<p class=\"error\">The database name '" . htmlspecialchars($database_name) . "' failed to load.</p>"; // Inform the user that the database failed to load.
@@ -68,16 +68,17 @@ if (!function_exists("save_database")) {
         if ($database_path == false) {
             return false; // The database path could not be determined.
         }
-        if (file_put_contents($database_path, json_encode($data, JSON_UNESCAPED_SLASHES))) {
+
+        wait_for_unlocked($database_path);
+        lock_file($database_path);
+        $response = file_put_contents($database_path, json_encode($data, (JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)));
+        unlock_file($database_path);
+
+        if ($response) {
             return true; // The file save was successful.
         } else {
             return false; // The file save failed.
         }
-
-        wait_for_unlocked($database_path);
-        lock_file($database_path);
-        file_put_contents($portal_config_filepath, json_encode($portal_config, JSON_UNESCAPED_SLASHES));
-        unlock_file($database_path);
     }
 }
 ?>
