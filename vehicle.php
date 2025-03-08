@@ -25,6 +25,12 @@ if (in_array($username, $portal_config["auth"]["access"]["admin"]) == false) {
 
 include "./databases.php";
 $user_database = load_database("users");
+
+$vehicle_id = $_GET["id"];
+if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == false) {
+    echo "<p class=\"error\">The selected vehicle is invalid.</p>";
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,31 +54,27 @@ $user_database = load_database("users");
             <?php
 
             $vehicle_id = $_GET["id"];
-            if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == true) {
-                $most_recent_location = most_recent_vehicle_location($vehicle_id, $user_database);
-                if ($most_recent_location == false) {
-                    echo "<p style=\"margin-top:0px;\">Never seen</p>";
-                } else {
-                    echo "<div style=\""; if (time() - $most_recent_location["time"] > 100) { echo "opacity:0.4;"; } echo "\">";
-                    echo "    <p style=\"margin-top:0px;\">Last seen " . time() - $most_recent_location["time"] . " seconds ago</p>";
-                    echo "    <table class=\"telemetry_table\">";
-                    echo "        <tr>";
-                    echo "            <td class=\"right\"><a href=\"https://www.openstreetmap.org/#map=17/" . $most_recent_location["lat"] . "/" . $most_recent_location["lon"]. "\" target=\"_blank\"><img src=\"assets/images/icons/location.svg\"></a></td>";
-                    echo "            <td class=\"left\">(" . $most_recent_location["lat"] . ", " . $most_recent_location["lon"] . ")</td>";
-                    echo "        </tr>";
-                    echo "        <tr>";
-                    echo "            <td class=\"right\"><img src=\"assets/images/icons/speed.svg\"></td>";
-                    echo "            <td class=\"left\">" . intval($most_recent_location["speed"]) . " m/s</td>";
-                    echo "        </tr>";
-                    echo "        <tr>";
-                    echo "            <td class=\"right\"><img src=\"assets/images/icons/altitude.svg\"></td>";
-                    echo "            <td class=\"left\">" . intval($most_recent_location["altitude"]) . " meters</td>";
-                    echo "        </tr>";
-                    echo "    </table>";
-                    echo "</div>";
-                }
+            $most_recent_location = most_recent_vehicle_location($vehicle_id, $user_database);
+            if ($most_recent_location == false) {
+                echo "<p style=\"margin-top:0px;\">Never seen</p>";
             } else {
-                echo "<p class=\"error\">The selected vehicle is invalid.</p>";
+                echo "<div style=\""; if (time() - $most_recent_location["time"] > 100) { echo "opacity:0.4;"; } echo "\">";
+                echo "    <p style=\"margin-top:0px;\">Last seen " . time() - $most_recent_location["time"] . " seconds ago</p>";
+                echo "    <table class=\"telemetry_table\">";
+                echo "        <tr>";
+                echo "            <td class=\"right\"><a href=\"https://www.openstreetmap.org/#map=17/" . $most_recent_location["lat"] . "/" . $most_recent_location["lon"]. "\" target=\"_blank\"><img src=\"assets/images/icons/location.svg\"></a></td>";
+                echo "            <td class=\"left\">(" . $most_recent_location["lat"] . ", " . $most_recent_location["lon"] . ")</td>";
+                echo "        </tr>";
+                echo "        <tr>";
+                echo "            <td class=\"right\"><img src=\"assets/images/icons/speed.svg\"></td>";
+                echo "            <td class=\"left\">" . intval($most_recent_location["speed"]) . " m/s</td>";
+                echo "        </tr>";
+                echo "        <tr>";
+                echo "            <td class=\"right\"><img src=\"assets/images/icons/altitude.svg\"></td>";
+                echo "            <td class=\"left\">" . intval($most_recent_location["altitude"]) . " meters</td>";
+                echo "        </tr>";
+                echo "    </table>";
+                echo "</div>";
             }
             ?>
             <hr>
@@ -82,7 +84,7 @@ $user_database = load_database("users");
             $location_files = array_reverse($location_files);
             foreach ($location_files as $file) {
                 $name = pathinfo(basename($file), PATHINFO_FILENAME);
-                echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"><a href=\"trackdownload.php?name=" . $name . "\">Download</a> <a href=\"trackview.php?name=" . $name . "\">View</a></p>";
+                echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"><a href=\"trackdownload.php?name=" . $name . "\">Download</a> <a href=\"trackview.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">View</a></p>";
             }
             ?>
         </main>

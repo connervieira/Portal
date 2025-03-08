@@ -162,6 +162,16 @@ function load_track_last_n_days($vehicle, $days, $user_database) {
     return $complete_track;
 }
 
+// This function returns the GPS log from a specific filepath (ex: "/var/www/protected/portal/tracks/cvieira/4721fa4e0c58dba102274da8/2025-03-08 UTC.json").
+function load_location_file($filepath) {
+    if (is_file($filepath)) {
+        $file_contents = file_get_contents($filepath);
+        return json_decode($file_contents, true);
+    } else {
+        return false;
+    }
+}
+
 // This function returns the last known location of a given vehicle.
 function most_recent_vehicle_location($vehicle, $user_database) {
     $all_location_files = list_gps_track_files($vehicle, $user_database); // Get a list of all location track files.

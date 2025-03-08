@@ -19,7 +19,8 @@ if ($associated_user == false) {
     exit();
 } else {
     // Check to see if it has been at least 10 seconds since the last submission:
-    $last_submission_timestamp = floatval(most_recent_vehicle_location($vehicle, $user_database)["time"]);
+    $most_recent_location = most_recent_vehicle_location($vehicle, $user_database);
+    $last_submission_timestamp = floatval($most_recent_location["time"]);
     if (time() < $last_submission_timestamp + 9.5) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
         echo "{\"success\": false, \"type\": \"client\", \"code\": \"premature_submission\", \"reason\": \"There must be a minimum of 10 seconds between submissions.\"}";
         exit();
