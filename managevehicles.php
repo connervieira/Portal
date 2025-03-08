@@ -51,11 +51,33 @@ include "./databases.php";
                     echo "<hr style=\"width:100px;\">";
                 } else if (time() - intval($_GET["confirm"]) <= 30) {
                     unset($user_database[$username]["vehicles"][$_GET["delete"]]);
+                    foreach ($user_database[$username]["widgets"] as $index => $widget) { // Iterate over each widget to remove any that are associated with this vehicle.
+                        if (in_array("vehicle", array_keys($widget)) and $widget["vehicle"] == $_GET["delete"]) {
+                            unset($user_database[$username]["widgets"][$index]);
+                        }
+                    }
+                    $vehicle_persistent_directory = join_paths([$portal_config["storage"]["gps_tracks"]["location"], $username, $_GET["delete"]]);
+                    echo $vehicle_persistent_directory;
+                    if (is_dir($vehicle_persistent_directory)) {
+                        if (delete_directory($vehicle_persistent_directory) == false) {
+                            echo "<p class=\"error\">Failed to remove the persistent vehicle directory. This is likely a server-side issue, so consider contact customer support.</p>";
+                            exit();
+                        }
+                    }
+                    $vehicle_volatile_directory = join_paths([$portal_config["databases"]["vehicles"]["location"], $username, $_GET["delete"]]);
+                    echo $vehicle_volatile_directory;
+                    if (is_dir($vehicle_volatile_directory)) {
+                        if (delete_directory($vehicle_volatile_directory) == false) {
+                            echo "<p class=\"error\">Failed to remove the volatile vehicle directory. This is likely a server-side issue, so consider contact customer support.</p>";
+                            exit();
+                        }
+                    }
                     save_database("users", $user_database);
                     header("Location: ./managevehicles.php");
+                    exit();
                 } else {
-                    echo "<p>Are you sure you would like to delete <b>" . $_GET["delete"] . "</b>.</p>";
-                    echo "<a class=\"button\" href=\"?delete=" . $_GET["delete"] . "&confirm=" . time() . "\">Delete</a> <a class=\"button\" href=\"managevehicles.php\">Back</a>";
+                    echo "<p>Are you sure you would like to delete <b>" . $user_database[$username]["vehicles"][$_GET["delete"]]["name"] . " (" . $_GET["delete"] . ")</b>? This will permanently erase all data associated with this vehicle, including location history and maintenance information.</p>";
+                    echo "<a class=\"button\" href=\"?delete=" . $_GET["delete"] . "&confirm=" . time() . "\">Delete</a> <a class=\"button\" href=\"managevehicles.php\">Cancel</a>";
                     echo "<hr style=\"width:100px;\">";
                 }
             } else if ($_POST["submit"] == "Create") {
@@ -130,6 +152,7 @@ include "./databases.php";
                     $year = intval($_POST["vehicle>" . $id . ">year"]);
                     $make = $_POST["vehicle>" . $id . ">make"];
                     $model = $_POST["vehicle>" . $id . ">model"];
+                    $vin = strtoupper($_POST["vehicle>" . $id . ">vin"]);
 
                     if (strlen($name) > 100 or $name !== preg_replace("/[^a-zA-Z0-9\- \/'\(\).,]/", "", $name)) {
                         echo "<p class=\"error\">The supplied vehicle nickname for \"" . substr($id, 0, 8) . "...\" is invalid.</p>";
@@ -147,12 +170,17 @@ include "./databases.php";
                         echo "<p class=\"error\">The supplied vehicle model for \"" . substr($id, 0, 8) . "...\" is invalid.</p>";
                         $valid = false; $all_valid = false;
                     }
+                    if (strlen($vin) > 30 or $vin !== preg_replace("/[^A-Z0-9]/", "", $vin)) {
+                        echo "<p class=\"error\">The supplied vehicle VIN for \"" . substr($id, 0, 8) . "...\" is invalid.</p>";
+                        $valid = false; $all_valid = false;
+                    }
 
                     if ($valid == true) {
                         $user_database[$username]["vehicles"][$id]["name"] = $name;
                         $user_database[$username]["vehicles"][$id]["year"] = $year;
                         $user_database[$username]["vehicles"][$id]["make"] = $make;
                         $user_database[$username]["vehicles"][$id]["model"] = $model;
+                        $user_database[$username]["vehicles"][$id]["vin"] = $vin;
                     }
 
                 }
@@ -178,7 +206,7 @@ include "./databases.php";
                     echo "<label for=\"vehicle>$id>year\">Year</label>: <input type=\"number\" step=\"1\" min=\"1900\" max=\"" . intval(date("Y"))+1 . "\" name=\"vehicle>$id>year\" id=\"vehicle>$id>year\" placeholder=\"2014\" value=\""; if ($vehicle["year"] !== 0) { echo $vehicle["year"]; } echo "\"><br>";
                     echo "<label for=\"vehicle>$id>make\">Make</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>$id>make\" id=\"vehicle>$id>make\" placeholder=\"Toyota\" value=\"" . $vehicle["make"] . "\"><br>";
                     echo "<label for=\"vehicle>$id>model\">Model</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>$id>model\" id=\"vehicle>$id>model\" placeholder=\"Camry\" value=\"". $vehicle["model"] . "\"><br>";
-                    echo "<label for=\"vehicle>$id>vin\">VIN</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9]+\" max=\"20\" name=\"vehicle>$id>vin\" id=\"vehicle>$id>vin\" placeholder=\"Vehicle Identification Number\">";
+                    echo "<label for=\"vehicle>$id>vin\">VIN</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9]+\" max=\"20\" name=\"vehicle>$id>vin\" id=\"vehicle>$id>vin\" placeholder=\"Vehicle Identification Number\" value=\"" . $vehicle["vin"] . "\">";
                     echo "<br><a class=\"button\" href=\"?delete=$id\">Delete</a> ";
                     echo "<input class=\"button\" type=\"submit\" id=\"submit\" name=\"submit\" value=\"Edit\"><br>";
                     echo "<hr style=\"width:100px;\">";

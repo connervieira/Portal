@@ -9,14 +9,21 @@ include "./databases.php";
 $received_data = strval($_POST["data"]); // Get the submitted data.
 $data = json_decode($received_data, true); // Decode the JSON data received.
 
+$vehicle = $_POST["identifier"];
+
 $user_database = load_database("users");
-$associated_user = vehicle_to_user($_POST["identifier"], $user_database);
+$associated_user = vehicle_to_user($vehicle, $user_database);
 
 if ($associated_user == false) {
     echo "{\"success\": false, \"type\": \"client\", \"code\": \"permission_denied\", \"reason\": \"Permission denied\"}";
     exit();
 } else {
-    // TODO: Check to see if it has been at least 10 seconds since the last submission.
+    // Check to see if it has been at least 10 seconds since the last submission:
+    $last_submission_timestamp = floatval(most_recent_vehicle_location($vehicle, $user_database)["time"]);
+    if (time() < $last_submission_timestamp + 9.5) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
+        echo "{\"success\": false, \"type\": \"client\", \"code\": \"premature_submission\", \"reason\": \"There must be a minimum of 10 seconds between submissions.\"}";
+        exit();
+    }
 
     // Handle image data:
     if (in_array("image", array_keys($data))) { // Check to see if there is image data associated with this submission.
@@ -30,9 +37,9 @@ if ($associated_user == false) {
             $mime_type = finfo_buffer(finfo_open(), $image_data, FILEINFO_MIME_TYPE);
 
             if (strtolower($mime_type) == "image/jpeg") { // Check to see if this image is a JPG.
-                $image_size_mb = strlen($image_data) * 1024 * 1024; // Calculate this image's size in megabytes.
+                $image_size_mb = strlen($image_data) / (1024 * 1024); // Calculate this image's size in megabytes.
                 if ($image_size_mb <= 10) { // Validate that this image is less than a certain number of megabytes.
-                    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $associated_user, $_POST["identifier"], $image . ".jpg"]);
+                    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $associated_user, $vehicle, $image . ".jpg"]);
                     if (is_dir(dirname($image_location)) == false) { // Check to see if the volatile storage directory needs to be initialized.
                         mkdir(dirname($image_location), 0777, true);
                     }
@@ -49,20 +56,20 @@ if ($associated_user == false) {
     }
 
     // Handle GPS data:
-    $location_storage_usage = get_location_storage_usage_vehicle($_POST["identifier"], $user_database);
+    $location_storage_usage = get_location_storage_usage_vehicle($vehicle, $user_database);
     $max_storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
     if ($location_storage_usage >= $max_storage_capacity) { // Check to see if the storage capacity is full.
         if ($portal_config["storage"]["gps_tracks"]["auto_delete"]) { // Check to see if auto-delete is enabled.
-            $gps_track_files = list_gps_track_files($_POST["identifier"], $user_database); // Get a list of all GPS track files associated with this vehicle.
+            $gps_track_files = list_gps_track_files($vehicle, $user_database); // Get a list of all GPS track files associated with this vehicle.
             if (sizeof($gps_track_files) >= 2) { // Check to make sure there is are least 2 files that we can delete.
                 $oldest_file = $gps_track_files[0];
                 if (file_exists($oldest_file)) { // Check to make sure the oldest file actually exists.
                     if (unlink($oldest_file) == false) { // Check to see if the oldest file failed to be deleted.
-                        echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"Failed to delete the oldest GPS track file. This may indicate a server-side bug, so consider contacting V0LT.\"}";
+                        echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"Failed to delete the oldest GPS track file. This may indicate a server-side bug, so consider contacting support.\"}";
                         exit();
                     }
                 } else {
-                    echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"The oldest GPS track file could not be removed. This may indicate a server-side bug, so consider contacting V0LT.\"}";
+                    echo "{\"success\": false, \"type\": \"server\", \"code\": \"clearing_space_failed\", \"reason\": \"The oldest GPS track file could not be identified. This may indicate a server-side bug, so consider contacting support.\"}";
                     exit();
                 }
             } else {
@@ -85,7 +92,7 @@ if ($associated_user == false) {
         echo "{\"success\": false, \"type\": \"client\", \"code\": \"timestamp_invalid\", \"reason\": \"Invalid timestamp\"}";
         exit();
     }
-    $track_location = join_paths([$portal_config["storage"]["gps_tracks"]["location"], $associated_user, $_POST["identifier"], gmdate("Y-m-d", $point_time) . " UTC.json"]);
+    $track_location = join_paths([$portal_config["storage"]["gps_tracks"]["location"], $associated_user, $vehicle, gmdate("Y-m-d", $point_time) . " UTC.json"]);
     if (is_dir(dirname($track_location)) == false) { // Check to see if the persistent track storage directory needs to be initialized.
         mkdir(dirname($track_location), 0777, true);
     }

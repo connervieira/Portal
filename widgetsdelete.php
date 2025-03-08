@@ -43,7 +43,7 @@ include "./databases.php";
             <hr>
 
             <?php
-            $widget = $_GET["widget"];
+            $widget = intval($_GET["widget"]);
             $confirm = $_GET["confirm"];
             $user_database = load_database("users");
 

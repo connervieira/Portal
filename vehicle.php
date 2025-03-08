@@ -24,6 +24,7 @@ if (in_array($username, $portal_config["auth"]["access"]["admin"]) == false) {
 }
 
 include "./databases.php";
+$user_database = load_database("users");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,15 +40,15 @@ include "./databases.php";
         </div>
         <h1>Portal</h1>
         <h2>Vehicle</h2>
+        <?php echo "<h4 style=\"margin-bottom:0px;\">" . $user_database[$username]["vehicles"][$vehicle_id]["name"] . "</h4>"; ?>
 
         <hr>
         <main>
+            <h3>Current Location</h3>
             <?php
-            $user_database = load_database("users");
 
             $vehicle_id = $_GET["id"];
             if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == true) {
-                echo "<h4 style=\"margin-bottom:0px;\">" . $user_database[$username]["vehicles"][$vehicle_id]["name"] . "</h4>";
                 $most_recent_location = most_recent_vehicle_location($vehicle_id, $user_database);
                 if ($most_recent_location == false) {
                     echo "<p style=\"margin-top:0px;\">Never seen</p>";
@@ -72,6 +73,16 @@ include "./databases.php";
                 }
             } else {
                 echo "<p class=\"error\">The selected vehicle is invalid.</p>";
+            }
+            ?>
+            <hr>
+            <h3>Location History</h3>
+            <?php
+            $location_files = list_gps_track_files($vehicle_id, $user_database);
+            $location_files = array_reverse($location_files);
+            foreach ($location_files as $file) {
+                $name = pathinfo(basename($file), PATHINFO_FILENAME);
+                echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"><a href=\"trackdownload.php?name=" . $name . "\">Download</a> <a href=\"trackview.php?name=" . $name . "\">View</a></p>";
             }
             ?>
         </main>

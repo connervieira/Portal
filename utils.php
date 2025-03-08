@@ -164,13 +164,13 @@ function load_track_last_n_days($vehicle, $days, $user_database) {
 
 // This function returns the last known location of a given vehicle.
 function most_recent_vehicle_location($vehicle, $user_database) {
-    $all_location_files = list_gps_track_files($vehicle, $user_database);
-    $last_file = end($all_location_files);
+    $all_location_files = list_gps_track_files($vehicle, $user_database); // Get a list of all location track files.
+    $last_file = end($all_location_files); // Get the most recent location track file.
     if (strlen($last_file) == 0) { return false; } // Return 'false' if there are no files to read.
-    $trackpoints = json_decode(file_get_contents($last_file), true);
-    ksort($trackpoints["track"]);
-    $final_trackpoint = end(array_keys($trackpoints["track"]));
-    $trackpoints["track"][$final_trackpoint]["time"] = $final_trackpoint;
+    $trackpoints = json_decode(file_get_contents($last_file), true); // Open the most recent location track file.
+    ksort($trackpoints["track"]); // Ensure the location trackpoints are in order of timestamp (which is the key).
+    $final_trackpoint = end(array_keys($trackpoints["track"])); // Get the last point in this file.
+    $trackpoints["track"][$final_trackpoint]["time"] = $final_trackpoint; // Add the timestamp of this point to it's data before returning.
     return $trackpoints["track"][$final_trackpoint];
 }
 
@@ -330,4 +330,15 @@ function widget_type_to_name($type) {
     $capitalized = ucwords($title);
     return $capitalized;
 }
+
+
+
+// This function deletes a directory and any files it contains. (code by: nbari@dalmp.com)
+function delete_directory($dir) {
+   $files = array_diff(scandir($dir), array('.','..'));
+    foreach ($files as $file) {
+        (is_dir("$dir/$file")) ? delete_directory("$dir/$file") : unlink("$dir/$file");
+    }
+    return rmdir($dir);
+  }
 ?>
