@@ -94,7 +94,7 @@ if (sizeof($user_database[$username]["widgets"]) > 0) { // Check to see if this 
             $total_distance = calculate_vehicle_distance_total($username, $days, $user_database);
             echo "<div class=\"widget\"><div class=\"vertically_centered\">";
             echo "<p class=\"widget-title\">total distance</p>";
-            echo "<p style=\"font-size: 2rem\">" . round($vehicle_distance/100)/10 . "km</p>";
+            echo "<p style=\"font-size: 2rem\">" . round($total_distance/100)/10 . "km</p>";
             echo "<p class=\"widget-title\">past " . $widget["interval"] . " days</p>";
             echo "</div></div>";
         } else if ($widget["type"] == "storage_total") {
