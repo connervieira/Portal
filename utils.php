@@ -345,10 +345,38 @@ function widget_type_to_name($type) {
 
 // This function deletes a directory and any files it contains. (code by: nbari@dalmp.com)
 function delete_directory($dir) {
-   $files = array_diff(scandir($dir), array('.','..'));
+    $files = array_diff(scandir($dir), array('.','..'));
     foreach ($files as $file) {
         (is_dir("$dir/$file")) ? delete_directory("$dir/$file") : unlink("$dir/$file");
     }
     return rmdir($dir);
-  }
+}
+
+
+// This function takes a dictionary of trackpoints (with the timestamp as the key) and returns a GPX string of the data.
+function locations_to_gpx($locations) {
+    $gpx_string = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><gpx version=\"1.0\" creator=\"V0LT Portal\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/0\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\"><trk><trkseg>";
+    foreach ($locations as $timestamp => $point) {
+        $lat = $point["lat"];
+        $lon = $point["lon"];
+        $alt = $point["alt"];
+        $spd = $point["spd"];
+        $head = $point["head"];
+        $time = gmdate('Y-m-d\TH:i:s.u\Z', $timestamp);
+        if ($lat != 0 and $lon != 0) {
+            $line = "<trkpt lat=\"" . $lat . "\" lon=\"" . $lon . "\">";
+            $line .= "<ele>" . $alt . "</ele>";
+            $line .= "<time>" . $time . "</time>";
+            $line .= "<course>" . $dir . "</course>";
+            $line .= "<speed>" . $spd . "</speed>";
+            $line .= "<src>gps</src>";
+            $line .= "</trkpt>";
+            $gpx_string .= $line;
+        }
+    }
+    $gpx_string .= "</trkseg></trk></gpx>";
+
+    return $gpx_string;
+
+}
 ?>

@@ -12,8 +12,8 @@ This is an informal to-do list for Portal. Is it not a comprehensive change-log,
     - [X] Widget deletion
     - [X] Widget editing
 - [ ] Add location track file management.
-    - [ ] Add the ability to download location tracks.
-    - [ ] Add a page to view a vehicle's location history on a map using Leaflet.
+    - [X] Add the ability to download location tracks.
+    - [X] Add a page to view a vehicle's location history on a map using Leaflet.
     - [ ] Add the ability to manually delete location tracks.
 - [ ] Show an image preview for all capture devices on each vehicle's page.
 - [ ] Add a vehicle maintainence tracking page.

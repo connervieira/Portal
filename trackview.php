@@ -67,8 +67,11 @@ if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == fal
                         const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap</a>'}).addTo(map);";
                     $index = 0; // This will be incremented to keep track of each marker.
                     foreach ($trackpoints as $time => $trackpoint) {
-                        echo "var marker" . $index . " = L.marker([" . $trackpoint["lat"] . ", " . $trackpoint["lon"] . "]).addTo(map);";
-                        echo "marker" . $index . ".bindPopup(\"" . date("Y-m-d H:i:s", $time) . "\");";
+                        if ($trackpoint["lat"] != 0 and $trackpoint["lon"] != 0) {
+                            echo "var marker" . $index . " = L.marker([" . $trackpoint["lat"] . ", " . $trackpoint["lon"] . "]).addTo(map);";
+                            echo "marker" . $index . ".bindPopup(\"" . date("Y-m-d H:i:s", $time) . "\");";
+                            $index++;
+                        }
                     }
                     echo "</script>";
                 } else {

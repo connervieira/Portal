@@ -84,7 +84,7 @@ if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == 
             $location_files = array_reverse($location_files);
             foreach ($location_files as $file) {
                 $name = pathinfo(basename($file), PATHINFO_FILENAME);
-                echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"><a href=\"trackdownload.php?name=" . $name . "\">Download</a> <a href=\"trackview.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">View</a></p>";
+                echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"><a href=\"trackdownload.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">Download</a> <a href=\"trackview.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">View</a></p>";
             }
             ?>
         </main>
