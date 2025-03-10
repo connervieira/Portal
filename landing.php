@@ -29,7 +29,10 @@ if ($_SESSION['authid'] == "dropauth") { // Check to see if the user is signed i
             <h2>Introduction</h2>
             <p>Portal is a fleet management utility for vehicles running <a href="https://v0lttech.com/predator.php">Predator</a> dash-cams (or similar compatible software/hardware). Portal allows owners or managers to view real-time images from their vehicles' dash-cams, as well as telemetry like location and speed. Portal even supports telemetry back-logging, which allows Predator to record telemetry offline, and automatically upload the back-log once connectivity is restored.</p>
             <p>Whether you just want to monitor one or two personal vehicles, or an entire business fleet, Portal's pay-as-you-go model scales to fit your needs. A flat-rate of $<?php echo $portal_config["payment"]["pricing"]["cost_per_vehicle"]; ?> per month per vehicle includes unlimited telemetry submissions (with a 10 second cooldown) and 1GB of location history storage. Portal also makes it easy to download and export your data in platform agnostic formats to make it easy to share edit data.</p>
-            <img src="./assets/images/screenshots/dashboard.png" style="border: 10px solid; border-radius: 25px;">
+            <div style="text-align:center;width:100%;">
+                <img src="./assets/images/screenshots/dashboard.png" style="border: 10px solid; border-radius: 25px;width:80%;"><br><br>
+                <img src="./assets/images/screenshots/track.png" style="border: 10px solid; border-radius: 25px;width:80%;">
+            </div>
         </main>
     </body>
 </html>
