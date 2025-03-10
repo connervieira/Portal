@@ -154,7 +154,7 @@ if (in_array($username, $portal_config["auth"]["access"]["admin"]) == false) {
                     <option value="blacklist" <?php if ($portal_config["auth"]["access"]["mode"] == "blacklist") { echo "selected"; } ?>>Blacklist</option>
                 </select><br>
 
-                <br><input type="submit" id="submit" name="submit" value="Submit">
+                <br><input class="button" type="submit" id="submit" name="submit" value="Submit">
             </form>
         </main>
     </body>
