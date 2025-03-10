@@ -15,6 +15,11 @@ b {
     font-family: LatoWebBold, Helvetica, Arial;
 }
 
+img {
+    text-align: center;
+    border-radius: 15px;
+}
+
 select, input:not([type="submit"]) {
     border-radius: 10px;
     padding: 5px;

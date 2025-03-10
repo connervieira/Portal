@@ -77,6 +77,37 @@ if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == 
                 echo "</div>";
             }
             ?>
+
+            <hr>
+            <h3>Video Preview</h3>
+            <?php
+            $image_directory = join_paths([$portal_config["databases"]["vehicles"]["location"], $username, $vehicle_id]);
+            if (is_dir($image_directory)) {
+                $images = array_diff(scandir($image_directory), array(".", ".."));
+                foreach ($images as $image) {
+                    $image_file = join_paths([$image_directory, $image]);
+                    $device = pathinfo($image, PATHINFO_FILENAME);
+                    $image_data = fetch_camera_preview($vehicle_id, $username, $device);
+                    if ($image_data == false) {
+                        echo "<p class=\"error\">The image file appears to be missing. This should never occur, and likely indicates a bug in Portal.</p>";
+                    } else {
+                        echo "<h4>" . $device . "</h4>";
+                        $image_age = time() - filemtime($image_file);
+                        if ($image_age < 1*60*60) { // Check to see if this image was captured within a certain number of hours.
+                            echo "<img style=\"height:300px;\" src=\"" . $image_data . "\">";
+                            if ($image_age > 10) {
+                                echo "<p style=\"margin-top:0px;opacity:0.6;\">$image_age seconds ago</p>";
+                            }
+                        } else {
+                            echo "<p style=\"margin-top:0px;opacity:0.6;\">No image captured recently</p>";
+                        }
+                    }
+                }
+            } else {
+                echo "<p>The image directory doesn't seem to exist. Have any of your vehicles submitted images since the last server restart?</p>";
+            }
+            ?>
+
             <hr>
             <h3>Location History</h3>
             <?php
@@ -86,9 +117,11 @@ if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == 
                 foreach ($location_files as $file) {
                     $name = pathinfo(basename($file), PATHINFO_FILENAME);
                     echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"></p>";
+                    echo "<div style=\"margin-top:-10px;\">";
                     echo "<a class=\"button\" href=\"trackdownload.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">Download</a>";
                     echo "<a class=\"button\" href=\"trackview.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">View</a>";
                     echo "<a class=\"button\" href=\"trackdelete.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">Delete</a>";
+                    echo "</div>";
                     echo "<br>";
                 }
             } else {
