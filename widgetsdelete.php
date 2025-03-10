@@ -47,7 +47,7 @@ include "./databases.php";
             $confirm = $_GET["confirm"];
             $user_database = load_database("users");
 
-            if ($widget < 0 or $widget > sizeof($user_database[$username]["widgets"])) {
+            if ($widget < 0 or $widget-2 > sizeof($user_database[$username]["widgets"])) {
                 echo "<p class=\"error\">Invalid widget ID.</p>";
                 exit(); 
             }

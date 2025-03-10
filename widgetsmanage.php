@@ -162,6 +162,42 @@ include "./databases.php";
                         }
                         echo "</select>";
                         echo "<br><label for=\"interval\" title=\"The utilization for a specific vehicle will be summed up for the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
+                    } else if ($type == "vehicle_idle_time") {
+                        echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
+                        foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
+                            echo "<option value=\"" . $vehicle . "\"";
+                            if ($widget["vehicle"] == $vehicle) { echo " selected"; }
+                            echo ">" . $user_database[$username]["vehicles"][$vehicle]["name"] . " (" . substr($vehicle, 0, 6) . "...)</option>";
+                        }
+                        echo "</select>";
+                        echo "<br><label for=\"interval\" title=\"The minutes spent idling will be calculated over the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
+                    } else if ($type == "vehicle_idle_percentage") {
+                        echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
+                        foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
+                            echo "<option value=\"" . $vehicle . "\"";
+                            if ($widget["vehicle"] == $vehicle) { echo " selected"; }
+                            echo ">" . $user_database[$username]["vehicles"][$vehicle]["name"] . " (" . substr($vehicle, 0, 6) . "...)</option>";
+                        }
+                        echo "</select>";
+                        echo "<br><label for=\"interval\" title=\"The minutes spent idling will be calculated over the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
+                    } else if ($type == "vehicle_active_time") {
+                        echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
+                        foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
+                            echo "<option value=\"" . $vehicle . "\"";
+                            if ($widget["vehicle"] == $vehicle) { echo " selected"; }
+                            echo ">" . $user_database[$username]["vehicles"][$vehicle]["name"] . " (" . substr($vehicle, 0, 6) . "...)</option>";
+                        }
+                        echo "</select>";
+                        echo "<br><label for=\"interval\" title=\"The minutes spent actively moving will be calculated over the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
+                    } else if ($type == "vehicle_active_percentage") {
+                        echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
+                        foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
+                            echo "<option value=\"" . $vehicle . "\"";
+                            if ($widget["vehicle"] == $vehicle) { echo " selected"; }
+                            echo ">" . $user_database[$username]["vehicles"][$vehicle]["name"] . " (" . substr($vehicle, 0, 6) . "...)</option>";
+                        }
+                        echo "</select>";
+                        echo "<br><label for=\"interval\" title=\"The minutes spent actively moving will be calculated over the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
                     } else if ($type == "vehicle_preview") {
                         echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
                         foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
@@ -202,6 +238,10 @@ include "./databases.php";
                     <option value=\"vehicles_active\" title=\"Displays vehicles that have moved in the past N minutes\">Vehicles Active</option>
                     <option value=\"vehicle_distance\" title=\"Displays the total distance traveled by a specific vehicle over the past N days\">Vehicle Distance</option>
                     <option value=\"vehicle_utilization\" title=\"Displays the percentage of time a vehicle has spent moving over the past N days\">Vehicle Utilization</option>
+                    <option value=\"vehicle_idle_time\" title=\"Displays the number of minutes a specific vehicle has spent idling over the past N days\">Vehicle Idle Time</option>
+                    <option value=\"vehicle_idle_percentage\" title=\"Displays the percentage of time a vehicle has spent idling versus the total time online over the past N days\">Vehicle Idle Percentage</option>
+                    <option value=\"vehicle_active_time\" title=\"Displays the number of minutes a specific vehicle has spent actively moving over the past N days\">Vehicle Active Time</option>
+                    <option value=\"vehicle_active_percentage\" title=\"Displays the percentage of time a vehicle has spent actively moving versus the total time online over the past N days\">Vehicle Active Percentage</option>
                     <option value=\"vehicle_preview\" title=\"Displays a dash-cam preview for a specific camera on a specific vehicle\">Vehicle Preview</option>
                     <option value=\"total_distance\" title=\"Displays the total distance travel by all vehicles over the past N days\">Total Distance</option>
                     <option value=\"storage_total\" title=\"Displays the total location track storage used for all vehicles\">Storage Total</option>

@@ -232,8 +232,10 @@ function online_vehicles($seconds, $user_database, $user) {
 }
 
 
-// This function calculates the utilization percentage (time spent moving / time spent stopped) for a given vehicle over the past number of days.
-function calculate_vehicle_utilization($vehicle, $days, $user_database) {
+
+
+// This function calculates the number of minutes a specific vehicle has spent actively moving.
+function calculate_vehicle_active_minutes($vehicle, $days, $user_database) {
     $track = load_track_last_n_days($vehicle, $days, $user_database);
     $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
 
@@ -261,7 +263,54 @@ function calculate_vehicle_utilization($vehicle, $days, $user_database) {
         $previous_timestamp = $timestamp;
         $previous_location = $track[$timestamp];
     }
+    return $active_minutes;
+}
+
+
+// This function calculates the utilization percentage (time spent moving / time spent stopped) for a given vehicle over the past number of days.
+function calculate_vehicle_utilization($vehicle, $days, $user_database) {
+    $track = load_track_last_n_days($vehicle, $days, $user_database);
+    $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
+
+    $earliest_timestamp = time() - ($total_minutes*60); // This is the earliest datapoint timestamp we will consider, since anything before this falls outside of the time interval.
+
+    $active_minutes = calculate_vehicle_active_minutes($vehicle, $days, $user_database);
+
     return $active_minutes / $total_minutes;
+}
+
+
+
+// This function calculates the number of minutes a specific vehicle has spent idling.
+function calculate_vehicle_idle_minutes($vehicle, $days, $user_database) {
+    $track = load_track_last_n_days($vehicle, $days, $user_database);
+    $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
+
+    $earliest_timestamp = time() - ($total_minutes*60); // This is the earliest datapoint timestamp we will consider, since anything before this falls outside of the time interval.
+
+    $idle_minutes = 0;
+    $previous_timestamp = 0;
+    $previous_location = array();
+    foreach (array_keys($track) as $timestamp) { // Iterate over each location point in this track.
+        if ($timestamp < $earliest_timestamp) { // Check to see if this timestamp is before the earliest we should consider.
+            continue; // Skip this datapoint.
+        }
+        $time_difference = $timestamp - $previous_timestamp;
+        if ($time_difference <= 1 * 60) { // Check to see if this timestamp is within a certain number of minutes of the previous timestamp.
+            if (in_array("lat", array_keys($previous_location)) and in_array("lon", array_keys($previous_location))) {
+                if (($previous_location["lat"] != 0.0 or $previous_location["lon"]) != 0.0 and ($track[$timestamp]["lat"] != 0.0 or $track[$timestamp]["lon"] != 0.0)) { // Make sure neither of the coordinates are null.
+                    $distance = calculate_distance($previous_location["lat"], $previous_location["lon"], $track[$timestamp]["lat"], $track[$timestamp]["lon"]);
+                    $speed = $distance/$time_difference; // Calculate the speed in meters per second.
+                    if ($speed < 1) { // Check to see if the vehicle speed is below a reasonable threshold.
+                        $idle_minutes += $time_difference/60;
+                    }
+                }
+            }
+        }
+        $previous_timestamp = $timestamp;
+        $previous_location = $track[$timestamp];
+    }
+    return $idle_minutes;
 }
 
 // This function calculates the total distance driven by a given vehicle over the past number of days.
