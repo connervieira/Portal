@@ -1,0 +1,79 @@
+b {
+    font-family: LatoWebBold, Helvetica, Arial;
+}
+
+
+h1 {
+    font-family: LatoWebHairline, Helvetica, Arial;
+    font-size: 6rem;
+
+    opacity: 0;
+    animation: spin-fade 1s forwards;
+    animation-delay: 0s;
+}
+
+.intro {
+    font-family: LatoWebLight, Helvetica, Arial;
+    font-size: 2rem;
+    opacity: 0;
+    animation: fade-in 1s forwards;
+    animation-delay: 0.5s;
+}
+
+p, h2, h3, h4, img, hr {
+    opacity: 0;
+    animation: fade-in 1s forwards;
+    animation-delay: 1s;
+}
+
+body {
+    font-family: LatoWebMedium, Helvetica, Arial;
+    background: black;
+    color: white;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 2%;
+    padding-right: 2%;
+    text-align: center;
+}
+
+@keyframes spin-fade {
+    from {
+        transform: rotate(-5deg);
+    }
+    to {
+        opacity: 1; /* End fully opaque */
+        transform: rotate(0deg);
+    }
+}
+@keyframes fade-in {
+    to {
+        opacity: 1; /* End fully opaque */
+    }
+}
+
+.button {
+    font-family: inherit;
+    font-size: inherit;
+    text-decoration: underline;
+    margin: 5px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid white;
+    background: #000000;
+    color: white;
+
+    opacity: 0;
+    animation: fade-in 1s forwards;
+    animation-delay: 1s;
+}
+
+.navbar {
+    width: 100%;
+    text-align: left;
+}
+
+a {
+    text-decoration: underline;
+    color: inherit;
+}
