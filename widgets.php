@@ -71,6 +71,17 @@ if (sizeof($user_database[$username]["widgets"]) > 0) { // Check to see if this 
             }
             echo "<p class=\"widget-title\">past " . $widget["interval"] . " days</p>";
             echo "</div></div>";
+        } else if ($widget["type"] == "vehicle_utilization") { // Displays the percentage of time spent moving against time spent stationary over the past N days.
+            echo "<div class=\"widget\"><div class=\"vertically_centered\">";
+            echo "<p class=\"widget-title\">vehicle distance</p>";
+            if (in_array($widget["vehicle"], array_keys($user_database[$username]["vehicles"]))) {
+                $utilization = calculate_vehicle_utilization($widget["vehicle"], $widget["interval"], $user_database);
+                echo "<p style=\"font-size: 2rem\">" . number_format($utilization * 100, 2) . "%</p>";
+            } else {
+                echo "<br><p class=\"error\" style=\"font-size: 1rem\">This vehicle does not exist.</p>";
+            }
+            echo "<p class=\"widget-title\">past " . $widget["interval"] . " days</p>";
+            echo "</div></div>";
         } else if ($widget["type"] == "vehicle_preview") { // Displays a preview of the camera for a specific vehicle.
             echo "<div class=\"widget\"><div class=\"vertically_centered\">";
             echo "<p class=\"widget-title\">preview</p>";

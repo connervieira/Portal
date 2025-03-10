@@ -237,10 +237,15 @@ function calculate_vehicle_utilization($vehicle, $days, $user_database) {
     $track = load_track_last_n_days($vehicle, $days, $user_database);
     $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
 
+    $earliest_timestamp = time() - ($total_minutes*60); // This is the earliest datapoint timestamp we will consider, since anything before this falls outside of the time interval.
+
     $active_minutes = 0;
     $previous_timestamp = 0;
     $previous_location = array();
     foreach (array_keys($track) as $timestamp) {
+        if ($timestamp < $earliest_timestamp) { // Check to see if this timestamp is before the earliest we should consider.
+            continue; // Skip this datapoint.
+        }
         $time_difference = $timestamp - $previous_timestamp;
         if ($time_difference <= 2 * 60) { // Check to see if this timestamp is within a certain number of minutes of the previous timestamp.
             if (in_array("lat", array_keys($previous_location)) and in_array("lon", array_keys($previous_location))) {

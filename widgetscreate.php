@@ -80,6 +80,18 @@ include "./databases.php";
                     $widget_info["type"] = $type;
                     $widget_info["vehicle"] = $vehicle;
                     $widget_info["interval"] = $interval;
+                } else if ($type == "vehicle_utilization") {
+                    if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == false) {
+                        echo "<p class=\"warning\">The specified vehicle does not appear to exist.</p>";
+                        $valid = false;
+                    }
+                    if ($interval < 1 or $interval > 120) {
+                        echo "<p class=\"warning\">The specified interval is outside of the expected range.</p>";
+                        $valid = false;
+                    }
+                    $widget_info["type"] = $type;
+                    $widget_info["vehicle"] = $vehicle;
+                    $widget_info["interval"] = $interval;
                 } else if ($type == "vehicle_preview") {
                     if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == false) {
                         echo "<p class=\"warning\">The specified vehicle does not appear to exist.</p>";
@@ -146,6 +158,14 @@ include "./databases.php";
                     }
                     echo "</select>";
                     echo "<br><label for=\"interval\" title=\"The total distance traveled by a specific vehicle will be summed up for the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"30\"> days<br>";
+                } else if ($type == "vehicle_utilization") {
+                    echo "<select id=\"type\" name=\"type\"><option value=\"vehicle_utilization\">" . widget_type_to_name($type) . "</option></select>";
+                    echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
+                    foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
+                        echo "<option value=\"" . $vehicle . "\">" . $user_database[$username]["vehicles"][$vehicle]["name"] . " (" . substr($vehicle, 0, 6) . "...)</option>";
+                    }
+                    echo "</select>";
+                    echo "<br><label for=\"interval\" title=\"The utilization percentage for a specific vehicle will be summed up for the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"30\"> days<br>";
                 } else if ($type == "vehicle_preview") {
                     echo "<select id=\"type\" name=\"type\"><option value=\"vehicle_preview\">" . widget_type_to_name($type) . "</option></select>";
                     echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";

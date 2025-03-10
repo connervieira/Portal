@@ -71,6 +71,17 @@ include "./databases.php";
                         }
                         $user_database[$username]["widgets"][$widget]["vehicle"] = $vehicle;
                         $user_database[$username]["widgets"][$widget]["interval"] = $interval;
+                    } else if ($type == "vehicle_utilization") {
+                        if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == false) {
+                            echo "<p class=\"error\">The selected vehicle does not exist.</p>";
+                            $valid = false;
+                        }
+                        if ($interval < 1 or $interval > 120) {
+                            echo "<p class=\"error\">The supplied interval is outside of the expected range.</p>";
+                            $valid = false;
+                        }
+                        $user_database[$username]["widgets"][$widget]["vehicle"] = $vehicle;
+                        $user_database[$username]["widgets"][$widget]["interval"] = $interval;
                     } else if ($type == "vehicle_preview") {
                         if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == false) {
                             echo "<p class=\"error\">The selected vehicle does not exist.</p>";
@@ -142,6 +153,15 @@ include "./databases.php";
                         }
                         echo "</select>";
                         echo "<br><label for=\"interval\" title=\"The total distance traveled by a specific vehicle will be summed up for the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
+                    } else if ($type == "vehicle_utilization") {
+                        echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
+                        foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
+                            echo "<option value=\"" . $vehicle . "\"";
+                            if ($widget["vehicle"] == $vehicle) { echo " selected"; }
+                            echo ">" . $user_database[$username]["vehicles"][$vehicle]["name"] . " (" . substr($vehicle, 0, 6) . "...)</option>";
+                        }
+                        echo "</select>";
+                        echo "<br><label for=\"interval\" title=\"The utilization for a specific vehicle will be summed up for the past N days.\">Interval:</label> <input name=\"interval\" id=\"interval\" placeholder=\"30\" step=\"1\" min=\"1\" max=\"120\" type=\"number\" style=\"width:70px;\" value=\"" . intval($widget["interval"]) . "\"> days";
                     } else if ($type == "vehicle_preview") {
                         echo "<br><label for=\"vehicle\">Vehicle:</label> <select name=\"vehicle\" id=\"vehicle\">";
                         foreach (array_keys($user_database[$username]["vehicles"]) as $vehicle) {
@@ -181,6 +201,7 @@ include "./databases.php";
                     <option value=\"vehicles_online\" title=\"Displays vehicles that have submitted data over the past N minutes (even if they are stationary)\">Vehicles Online</option>
                     <option value=\"vehicles_active\" title=\"Displays vehicles that have moved in the past N minutes\">Vehicles Active</option>
                     <option value=\"vehicle_distance\" title=\"Displays the total distance traveled by a specific vehicle over the past N days\">Vehicle Distance</option>
+                    <option value=\"vehicle_utilization\" title=\"Displays the percentage of time a vehicle has spent moving over the past N days\">Vehicle Utilization</option>
                     <option value=\"vehicle_preview\" title=\"Displays a dash-cam preview for a specific camera on a specific vehicle\">Vehicle Preview</option>
                     <option value=\"total_distance\" title=\"Displays the total distance travel by all vehicles over the past N days\">Total Distance</option>
                     <option value=\"storage_total\" title=\"Displays the total location track storage used for all vehicles\">Storage Total</option>
