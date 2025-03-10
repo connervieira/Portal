@@ -53,7 +53,7 @@ include "./databases.php";
             }
 
             if (time() - $confirm < 0) {
-                echo "<p class=\"error\">The confirmation timestamp is in the future.</p>";
+                echo "<p class=\"error\">The confirmation timestamp is in the future. If you clicked an external link to get here, then it is possible someone is trying to manipulate you into deleting one of your Portal widgets.</p>";
             } else if (time() - $confirm < 30) {
                 unset($user_database[$username]["widgets"][$widget]);
                 if (save_database("users", $user_database)) {

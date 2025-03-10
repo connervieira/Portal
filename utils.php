@@ -321,6 +321,20 @@ function get_location_storage_usage_total($user, $user_database) {
     return $total_usage;
 }
 
+// This function returns the location track file storage usage for the largest vehicle for a given user in bytes.
+function get_location_storage_usage_largest($user, $user_database) {
+    $max_usage = 0; // This is a placeholder that will be replaced with the largest vehicle storage usage value.
+    $largest_vehicle = ""; // This will be replaced with the vehicle ID with the largest storage usage.
+    foreach (array_keys($user_database[$user]["vehicles"]) as $vehicle) {
+        $vehicle_usage = get_location_storage_usage_vehicle($vehicle, $user_database);
+        if ($vehicle_usage > $max_usage) {
+            $largest_vehicle = $vehicle;
+            $max_usage = $vehicle_usage;
+        }
+    }
+    return array($largest_vehicle, $max_usage);
+}
+
 // This function returns the GPS location track file storage usage for a particular vehicle.
 function get_location_storage_usage_vehicle($vehicle, $user_database) {
     $total_usage = 0; // This is a placeholder that will be incremented to keep track of the total disk usage.

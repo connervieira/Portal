@@ -57,7 +57,7 @@ if ($associated_user == false) {
     }
 
     // Handle GPS data:
-    $location_storage_usage = get_location_storage_usage_vehicle($vehicle, $user_database);
+    $location_storage_usage = get_location_storage_usage_vehicle($vehicle, $user_database); // Determine how much storage is currently used for this vehicle.
     $max_storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
     if ($location_storage_usage >= $max_storage_capacity) { // Check to see if the storage capacity is full.
         if ($portal_config["storage"]["gps_tracks"]["auto_delete"]) { // Check to see if auto-delete is enabled.

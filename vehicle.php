@@ -81,10 +81,18 @@ if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == 
             <h3>Location History</h3>
             <?php
             $location_files = list_gps_track_files($vehicle_id, $user_database);
-            $location_files = array_reverse($location_files);
-            foreach ($location_files as $file) {
-                $name = pathinfo(basename($file), PATHINFO_FILENAME);
-                echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"><a href=\"trackdownload.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">Download</a> <a href=\"trackview.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">View</a></p>";
+            $location_files = array_reverse($location_files); // Reverse the list, so more recent files appear at the start.
+            if (sizeof($location_files) > 0) {
+                foreach ($location_files as $file) {
+                    $name = pathinfo(basename($file), PATHINFO_FILENAME);
+                    echo "<p style=\"margin-bottom:0px;\"><b>" . $name . "</b></p><p style=\"margin-top:0px;\"></p>";
+                    echo "<a class=\"button\" href=\"trackdownload.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">Download</a>";
+                    echo "<a class=\"button\" href=\"trackview.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">View</a>";
+                    echo "<a class=\"button\" href=\"trackdelete.php?name=" . $name . "&vehicle=" . $vehicle_id . "\">Delete</a>";
+                    echo "<br>";
+                }
+            } else {
+                echo "<p><i>There are no track files to display.</i></p>";
             }
             ?>
         </main>

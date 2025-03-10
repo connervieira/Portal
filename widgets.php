@@ -91,18 +91,37 @@ if (sizeof($user_database[$username]["widgets"]) > 0) { // Check to see if this 
             }
             echo "</div></div>";
         } else if ($widget["type"] == "total_distance") { // Displays the total distance all vehicles have driven in the past N days.
-            $total_distance = calculate_vehicle_distance_total($username, $days, $user_database);
+            $total_distance = calculate_vehicle_distance_total($username, $widget["interval"], $user_database);
             echo "<div class=\"widget\"><div class=\"vertically_centered\">";
             echo "<p class=\"widget-title\">total distance</p>";
             echo "<p style=\"font-size: 2rem\">" . round($total_distance/100)/10 . "km</p>";
             echo "<p class=\"widget-title\">past " . $widget["interval"] . " days</p>";
             echo "</div></div>";
-        } else if ($widget["type"] == "storage_total") {
-            // TODO: Display the total GPS track location storage usage.
+        } else if ($widget["type"] == "storage_total") { // Displays the total storage used for all vehicle track files combined.
+            $total_storage_usage = get_location_storage_usage_total($username, $user_database);
+            $total_storage_gb = $total_storage_usage / (1000**3); // Convert the storage usage from bytes into bytes into GB.
+            echo "<div class=\"widget\"><div class=\"vertically_centered\">";
+            echo "<p class=\"widget-title\">total storage</p>";
+            echo "<p style=\"font-size: 2rem\">" . number_format($total_storage_gb, 2) . " GB</p>";
+            echo "</div></div>";
         } else if ($widget["type"] == "storage_largest") {
-            // TODO: Display the GPS track location storage usage for the vehicle that is closest to full.
+            $response = get_location_storage_usage_largest($username, $user_database);
+            $largest_vehicle = $response[0];
+            $largest_usage = $response[1];
+            $largest_usage_gb = $largest_usage / (1000**3); // Convert the storage usage from bytes into bytes into GB.
+            echo "<div class=\"widget\"><div class=\"vertically_centered\">";
+            echo "<p class=\"widget-title\">largest storage</p>";
+            echo "<p style=\"font-size: 1.5rem\">" . $user_database[$username]["vehicles"][$largest_vehicle]["name"] . "</p>";
+            echo "<p style=\"font-size: 2rem\">" . number_format($largest_usage_gb, 2) . " GB</p>";
+            echo "</div></div>";
         } else if ($widget["type"] == "storage_vehicle") {
-            // TODO: Display the GPS track location storage usage for a specific vehicle.
+            $storage_usage = get_location_storage_usage_vehicle($widget["vehicle"], $user_database);
+            $storage_usage_gb = $storage_usage / (1000**3); // Convert the storage usage from bytes into bytes into GB.
+            echo "<div class=\"widget\"><div class=\"vertically_centered\">";
+            echo "<p class=\"widget-title\">storage usage</p>";
+            echo "<p style=\"font-size: 1.5rem\">" . $user_database[$username]["vehicles"][$widget["vehicle"]]["name"] . "</p>";
+            echo "<p style=\"font-size: 2rem\">" . number_format($storage_usage_gb, 2) . " GB</p>";
+            echo "</div></div>";
         }
     }
 } else {
