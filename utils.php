@@ -181,7 +181,24 @@ function most_recent_vehicle_location($vehicle, $user_database) {
     ksort($trackpoints["track"]); // Ensure the location trackpoints are in order of timestamp (which is the key).
     $final_trackpoint = end(array_keys($trackpoints["track"])); // Get the last point in this file.
     $trackpoints["track"][$final_trackpoint]["time"] = $final_trackpoint; // Add the timestamp of this point to it's data before returning.
-    return $trackpoints["track"][$final_trackpoint];
+
+    $location = $trackpoints["track"][$final_trackpoint];
+    if ($location["lat"] == null) {
+        $location["lat"] = 0;
+    }
+    if ($location["lon"] == null) {
+        $location["lon"] = 0;
+    }
+    if ($location["alt"] == null) {
+        $location["alt"] = 0;
+    }
+    if ($location["spd"] == null) {
+        $location["spd"] = 0;
+    }
+    if ($location["head"] == null) {
+        $location["head"] = -1;
+    }
+    return $location;
 }
 
 // This function returns a list of vehicle ID's that have been active in the past N seconds.
@@ -431,7 +448,7 @@ function locations_to_gpx($locations) {
         $spd = $point["spd"];
         $head = $point["head"];
         $time = gmdate('Y-m-d\TH:i:s.u\Z', $timestamp);
-        if ($lat != 0 and $lon != 0) {
+        if ($lat != 0 and $lon != 0 and $lat != null and $lon != null) {
             $line = "<trkpt lat=\"" . $lat . "\" lon=\"" . $lon . "\">";
             $line .= "<ele>" . $alt . "</ele>";
             $line .= "<time>" . $time . "</time>";

@@ -63,12 +63,12 @@ if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == fal
                     $first_datapoint = reset($trackpoints);
                     echo "<div id=\"map\" style=\"margin-top:50px;height:500px;width:100%;\"></div>";
                     echo "<script>
-                        const map = L.map('map').setView([" . $first_datapoint["lat"] . ", " . $first_datapoint["lon"] . "], 12);
+                        const map = L.map('map').setView([" . floatval($first_datapoint["lat"]) . ", " . floatval($first_datapoint["lon"]) . "], 12);
                         const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap</a>'}).addTo(map);";
                     $index = 0; // This will be incremented to keep track of each marker.
                     foreach ($trackpoints as $time => $trackpoint) {
-                        if ($trackpoint["lat"] != 0 and $trackpoint["lon"] != 0) {
-                            echo "var marker" . $index . " = L.marker([" . $trackpoint["lat"] . ", " . $trackpoint["lon"] . "]).addTo(map);";
+                        if ($trackpoint["lat"] != 0 and $trackpoint["lon"] != 0 and $trackpoint["lat"] != null and $trackpoint["lon"] != null) {
+                            echo "\nvar marker" . $index . " = L.marker([" . $trackpoint["lat"] . ", " . $trackpoint["lon"] . "]).addTo(map);";
                             echo "marker" . $index . ".bindPopup(\"" . date("Y-m-d H:i:s", $time) . "\");";
                             $index++;
                         }

@@ -76,13 +76,12 @@ if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == 
                 echo "    </table>";
                 echo "</div>";
             }
-            ?>
 
-            <hr>
-            <h3>Video Preview</h3>
-            <?php
+
             $image_directory = join_paths([$portal_config["databases"]["vehicles"]["location"], $username, $vehicle_id]);
             if (is_dir($image_directory)) {
+                echo "<hr>";
+                echo "<h3>Video Preview</h3>";
                 $images = array_diff(scandir($image_directory), array(".", ".."));
                 foreach ($images as $image) {
                     $image_file = join_paths([$image_directory, $image]);
@@ -103,8 +102,6 @@ if (in_array($vehicle_id, array_keys($user_database[$username]["vehicles"])) == 
                         }
                     }
                 }
-            } else {
-                echo "<p>The image directory doesn't seem to exist. Have any of your vehicles submitted images since the last server restart?</p>";
             }
             ?>
 

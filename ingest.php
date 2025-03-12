@@ -109,13 +109,33 @@ if ($associated_user == false) {
     }
     if (file_exists($track_location)) { // Check to see if this specific file needs to be initalized.
         $gps_track = json_decode(file_get_contents($track_location), true); // Load the existing GPS track.
-        $gps_track["track"][$point_time] = array(
-            "lat" => round(floatval($data["location"]["lat"])*100000)/100000,
-            "lon" => round(floatval($data["location"]["lon"])*100000)/100000,
-            "alt" => round(floatval($data["location"]["alt"])*10)/10,
-            "spd" => round(floatval($data["location"]["spd"])*10)/10,
-            "head" => round(floatval($data["location"]["head"]))
-        );
+        $gps_track["track"][$point_time] = array();
+        if ($data["location"]["lat"] != null) {
+            $gps_track["track"][$point_time]["lat"] = round(floatval($data["location"]["lat"])*100000)/100000;
+        } else {
+            $gps_track["track"][$point_time]["lat"] = null;
+        }
+        if ($data["location"]["lon"] != null) {
+            $gps_track["track"][$point_time]["lon"] = round(floatval($data["location"]["lon"])*100000)/100000;
+        } else {
+            $gps_track["track"][$point_time]["lon"] = null;
+        }
+        if ($data["location"]["alt"] != null) {
+            $gps_track["track"][$point_time]["alt"] = round(floatval($data["location"]["alt"])*10)/10;
+        } else {
+            $gps_track["track"][$point_time]["alt"] = null;
+        }
+        if ($data["location"]["spd"] != null) {
+            $gps_track["track"][$point_time]["spd"] = round(floatval($data["location"]["spd"])*10)/10;
+        } else {
+            $gps_track["track"][$point_time]["spd"] = null;
+        }
+        if ($data["location"]["head"] != null) {
+            $gps_track["track"][$point_time]["head"] = round(floatval($data["location"]["head"])*10)/10;
+        } else {
+            $gps_track["track"][$point_time]["head"] = null;
+        }
+
         ksort($gps_track["track"]);
 
         file_put_contents($track_location, json_encode($gps_track));
