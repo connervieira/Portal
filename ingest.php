@@ -21,7 +21,8 @@ if ($associated_user == false) {
     // Check to see if it has been at least 10 seconds since the last submission:
     $most_recent_location = most_recent_vehicle_location($vehicle, $user_database);
     $last_submission_timestamp = floatval($most_recent_location["time"]);
-    if (time() < $last_submission_timestamp + 9.5) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
+    $point_time = intval($data["location"]["time"]);
+    if ($point_time < $last_submission_timestamp + 9.5) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
         echo "{\"success\": false, \"type\": \"client\", \"code\": \"premature_submission\", \"reason\": \"There must be a minimum of 10 seconds between submissions.\"}";
         exit();
     }
@@ -88,7 +89,6 @@ if ($associated_user == false) {
         echo "{\"success\": false, \"type\": \"client\", \"code\": \"timezone_offset_invalid\", \"reason\": \"The timezone offset is invalid.\"}";
         exit();
     }
-    $point_time = intval($data["location"]["time"]);
     if (time() - $point_time >= 60*60*24*365*5 or time() - $point_time <= -1*60*60*25*5) { // Check to see if the timestamp is more than 5 years into the past, or more than 5 days into the future.
         echo "{\"success\": false, \"type\": \"client\", \"code\": \"timestamp_invalid\", \"reason\": \"Invalid timestamp\"}";
         exit();
