@@ -172,6 +172,39 @@ function load_location_file($filepath) {
     }
 }
 
+
+# This function returns the timestamps associated with all track points for a given vehicle.
+function list_all_timestamps($vehicle, $user_database) {
+    $all_location_files = list_gps_track_files($vehicle, $user_database);
+
+    $timestamps = array();
+
+    $complete_track = array(); // This will hold every location point from the relevant files.
+    foreach ($all_location_files as $file) {
+        $file_contents = file_get_contents($file);
+        $trackpoints = json_decode($file_contents, true);
+        foreach (array_keys($trackpoints["track"]) as $timestamp) {
+            array_push($timestamps, $timestamp);
+        }
+    }
+
+    return $timestamps;
+}
+
+
+// This function takes a given timestamp, and an array of timestamps, and returns the time since the previous timestamp. (45 with 20, 30, 40, 50, 60, 70 -> 45-40 = 5 seconds)
+function time_since_previous_timestamp($timestamp, $timestamps) {
+    asort($timestamps);
+    $last_timestamp = 0;
+    foreach ($timestamps as $entry) {
+        if ($entry > $timestamp) {
+            break;
+        }
+        $last_timestamp = $entry;
+    }
+    return $timestamp - $last_timestamp;
+}
+
 // This function returns the last known location of a given vehicle.
 function most_recent_vehicle_location($vehicle, $user_database) {
     $all_location_files = list_gps_track_files($vehicle, $user_database); // Get a list of all location track files.
