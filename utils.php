@@ -471,6 +471,30 @@ function delete_directory($dir) {
 }
 
 
+// This function returns the max allowed file capacity for a given user (per vehicle).
+function storage_capacity($user, $user_database) {
+    global $portal_config;
+
+    $storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
+    if (in_array("payment", array_keys($user_database[$user])) == true and time() - $user_database[$user]["payment"]["storage"]["expiration"] < 0) {
+        $storage_capacity += $user_database[$user]["payment"]["storage"]["capacity_gb"]*1000*1000*1000; // Calculate the max file capacity in bytes.
+    }
+    return $storage_capacity;
+}
+
+
+
+// This function checks to see if an account is in good standing financially (the subscription is not expired, and the vehicle count is within quota).
+function is_account_in_good_standing($user, $user_database) {
+    if ($user_database[$user]["payment"]["vehicles"]["expiration"] >= time() and sizeof(array_keys($user[$username]["vehicles"])) <= $user_database[$username]["payment"]["vehicles"]["count"]) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+
 // This function takes a dictionary of trackpoints (with the timestamp as the key) and returns a GPX string of the data.
 function locations_to_gpx($locations) {
     $gpx_string = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><gpx version=\"1.0\" creator=\"V0LT Portal\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/0\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\"><trk><trkseg>";

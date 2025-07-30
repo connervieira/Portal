@@ -20,15 +20,20 @@ if (file_exists($portal_config_filepath) == false) { // Check to see if the data
     $portal_config["auth"]["provider"]["signout"] = "../dropauth/signout.php";
     $portal_config["auth"]["provider"]["signup"] = "../dropauth/signup.php";
     $portal_config["payment"]["enabled"] = false; // Setting this to 'false' will disable payments, and unrestrict all user accounts. If you intend to self-host Portal, this should be disabled.
-    $portal_config["payment"]["pricing"]["cost_per_vehicle"] = 25;
+    $portal_config["payment"]["pricing"]["cost_per_vehicle"] = 20;
     $portal_config["payment"]["pricing"]["cost_per_GB"] = 5;
     $portal_config["payment"]["stripe"]["auth"]["account_key"] = "";
     $portal_config["payment"]["stripe"]["auth"]["client_secret"] = "";
+    $portal_config["payment"]["stripe"]["auth"]["provider"] = "/var/www/html/stripe-php/init.php";
+    $portal_config["payment"]["stripe"]["link"]["management"] = ""; // This is the page where users can manage their subscriptions.
+    $portal_config["payment"]["stripe"]["link"]["vehicles"] = "";
+    $portal_config["payment"]["stripe"]["link"]["storage"] = "";
     $portal_config["databases"]["users"]["location"] = "/var/www/protected/portal/users.json"; // Persistent user data storage.
     $portal_config["databases"]["vehicles"]["location"] = "/dev/shm/portal/vehicles/"; // Volatile vehicle information storage (images).
     $portal_config["storage"]["gps_tracks"]["location"] = "/var/www/protected/portal/tracks/"; // Persistent GPS track storage location.
     $portal_config["storage"]["gps_tracks"]["default_capacity"] = 1; // The default storage capacity for location tracks (in GB) per vehicle.
     $portal_config["storage"]["gps_tracks"]["auto_delete"] = true; // Determines whether old location tracks will be automatically deleted as space runs out.
+    $portal_config["contact"]["link"] = "https://v0lttech.com/contact.php";
 
     fwrite($portal_configuration_database_file, json_encode($portal_config, JSON_UNESCAPED_SLASHES)); // Set the contents of the database file to the placeholder configuration.
     fclose($portal_configuration_database_file); // Close the database file.

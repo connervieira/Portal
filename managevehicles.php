@@ -213,18 +213,26 @@ include "./databases.php";
                 }
                 ?>
             </form>
-            <form method="POST">
-                <h3>New Vehicle</h3>
-                <?php
+            <h3>New Vehicle</h3>
+            <?php
+            if (time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0 and sizeof($user_database[$username]["vehicles"]) < $user_database[$username]["payment"]["vehicles"]["count"]) {
+                echo "<form method=\"POST\">";
                 echo "<label for=\"vehicle>new>name\">Name</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>name\" id=\"vehicle>new>name\" placeholder=\"Recognizable Nickname\" required><br><br>";
                 echo "<label for=\"vehicle>new>year\">Year</label>: <input type=\"number\" step=\"1\" min=\"1900\" max=\"" . intval(date("Y"))+1 . "\" name=\"vehicle>new>year\" id=\"vehicle>new>year\" placeholder=\"2014\"><br>";
                 echo "<label for=\"vehicle>new>make\">Make</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>make\" id=\"vehicle>new>make\" placeholder=\"Manufacturer\"><br>";
                 echo "<label for=\"vehicle>new>model\">Model</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>model\" id=\"vehicle>new>model\" placeholder=\"Camry\"><br>";
                 echo "<label for=\"vehicle>new>vin\">VIN</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9]+\" max=\"20\" name=\"vehicle>new>vin\" id=\"vehicle>new>vin\" placeholder=\"Vehicle Identification Number\"><br>";
-                ?>
-
-                <br><input class="button" type="submit" id="submit" name="submit" value="Create">
-            </form>
+                echo "<br><input class=\"button\" type=\"submit\" id=\"submit\" name=\"submit\" value=\"Create\">";
+                echo "</form>";
+            } else if ($user_database[$username]["payment"]["vehicles"]["count"] == 0 and sizeof($user_database[$username]["vehicles"]) == 0) {
+                echo "<p>You don't currently have an active subscription. Visit the <a href=\"./managepayments.php\">payment management</a> page to purchase a subscription to track one or more vehicles.</p>";
+                echo "<p>For a 3 month free trial, use promo-code TRYPORTAL90 with as many vehicles as you need. Don't hestitate to <a href=\"" . $portal_config["contact"]["link"] . "\">contact V0LT</a> with any questions!</a>";
+            } else if (time() - $user_database[$username]["payment"]["vehicles"]["expiration"] >= 0) {
+                echo "<p>Your subscription has expired! Please visit the <a href=\"./managepayments.php\">payment management</a> page to renew your subscription.</p>";
+            } else if (sizeof($user_database[$username]["vehicles"]) >= $user_database[$username]["payment"]["vehicles"]["count"]) {
+                echo "<p>You have used the maximum quantity of vehicles for your subscription! If you'd like to increase the number of vehicles you can register, please visit the <a href=\"./managepayments.php\">payment management</a> page, cancel your existing subscription, then create a new subscription with an increased quantity during check out.</p>";
+            }
+            ?>
         </main>
     </body>
 </html>

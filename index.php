@@ -62,10 +62,27 @@ include "./databases.php";
                         array("type" => "total_distance", "interval" => 30),
                     ),
                     "payment" => array(
+                        "vehicles" => array(
+                            "count" => 0,
+                            "expiration" => 0
+                        ),
+                        "storage" => array(
+                            "capacity_gb" => 0,
+                            "expiration" => 0
+                        )
                     )
                 );
-
                 save_database("users", $user_database);
+            }
+
+
+
+            if ($user_database[$username]["payment"]["vehicles"]["expiration"] == 0) {
+                echo "<p>Welcome to Portal! You don't currently have an active subscription, so you won't be able to register any vehicles. However, you can still poke around the interface to see how things work. If you'd like to try Portal for free for 90 days, use the coupon code on the <a href=\"./managevehicles.php\">vehicle management page</a> with as many vehicles as you want!</p>";
+            } else if ($user_database[$username]["payment"]["vehicles"]["expiration"] < time()) {
+                echo "<p class=\"error\">Your Portal subscription as expired, so telemetry ingest is disabled. Please visit the <a href=\"./managepayments.php\">payment management page</a> to resume your subscription.</p>";
+            } else if (sizeof(array_keys($user_database[$username]["vehicles"])) > $user_database[$username]["payment"]["vehicles"]["count"]) {
+                echo "<p class=\"error\">The number of registered vehicles exceeds your subscription quantity, so telemtry ingest is disabled. Please remove vehicles on the <a href=\"./managevehicles.php\">vehicle management page</a>, or cancel and update your subscription with a larger quantity on the <a href=\"./managepayments.php\">payment management page</a>.</p>";
             }
             ?>
 

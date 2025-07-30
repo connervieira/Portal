@@ -14,10 +14,15 @@ $vehicle = $_POST["identifier"];
 $user_database = load_database("users");
 $associated_user = vehicle_to_user($vehicle, $user_database);
 
+
 if ($associated_user == false) {
     echo "{\"success\": false, \"type\": \"client\", \"code\": \"permission_denied\", \"reason\": \"Permission denied\"}";
     exit();
 } else {
+    if (is_account_in_good_standing($associated_user, $user_database) == false) {
+        echo "{\"success\": false, \"type\": \"client\", \"code\": \"subscription_expired\", \"reason\": \"Your subscription is either expired, or insufficient to accept this request.\"}";
+    }
+
     // Check to see if it has been at least 10 seconds since the last submission:
     $point_time = intval($data["location"]["time"]);
     $time_since_previous_submission = time_since_previous_timestamp($point_time, list_all_timestamps($vehicle, $user_database));
@@ -25,6 +30,7 @@ if ($associated_user == false) {
         echo "{\"success\": false, \"type\": \"client\", \"code\": \"premature_submission\", \"reason\": \"There must be a minimum of 10 seconds between submissions.\"}";
         exit();
     }
+
 
     // Handle image data:
     if (in_array("image", array_keys($data))) { // Check to see if there is image data associated with this submission.
@@ -58,7 +64,7 @@ if ($associated_user == false) {
 
     // Handle GPS data:
     $location_storage_usage = get_location_storage_usage_vehicle($vehicle, $user_database); // Determine how much storage is currently used for this vehicle.
-    $max_storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
+    $max_storage_capacity = storage_capacity($user, $user_database); // Fetch this user's max file capacity (per vehicle) in bytes.
     if ($location_storage_usage >= $max_storage_capacity) { // Check to see if the storage capacity is full.
         if ($portal_config["storage"]["gps_tracks"]["auto_delete"]) { // Check to see if auto-delete is enabled.
             $gps_track_files = list_gps_track_files($vehicle, $user_database); // Get a list of all GPS track files associated with this vehicle.

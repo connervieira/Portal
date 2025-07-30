@@ -16,6 +16,8 @@ This is an informal to-do list for Portal. Is it not a comprehensive change-log,
     - [X] Add a page to view a vehicle's location history on a map using Leaflet.
     - [X] Add the ability to manually delete location tracks.
 - [X] Show an image preview for all capture devices on each vehicle's page.
-- [ ] Add vehicle limits based on payment.
-- [ ] Add payment ingest system.
+- [X] Add vehicle limits based on payment.
+    - [X] Add limits to vehicle management page.
+    - [X] Add limits to data ingest page.
+- [X] Add payment ingest system.
 - [ ] Add a vehicle maintainence tracking page.
