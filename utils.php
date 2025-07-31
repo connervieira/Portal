@@ -486,7 +486,9 @@ function storage_capacity($user, $user_database) {
 
 // This function checks to see if an account is in good standing financially (the subscription is not expired, and the vehicle count is within quota).
 function is_account_in_good_standing($user, $user_database) {
-    if ($user_database[$user]["payment"]["vehicles"]["expiration"] >= time() and sizeof(array_keys($user[$username]["vehicles"])) <= $user_database[$username]["payment"]["vehicles"]["count"]) {
+    if ($portal_config["payment"]["enabled"] == false) {
+        return true;
+    } else if ($user_database[$user]["payment"]["vehicles"]["expiration"] >= time() and sizeof(array_keys($user[$username]["vehicles"])) <= $user_database[$username]["payment"]["vehicles"]["count"]) {
         return true;
     } else {
         return false;

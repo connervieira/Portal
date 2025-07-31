@@ -22,8 +22,8 @@ h1 {
 
 p, h2, h3, h4, img, hr {
     opacity: 0;
-    animation: fade-in 1s forwards;
-    animation-delay: 0.5s;
+    animation: fade-in 0.5s forwards;
+    animation-delay: 0.25s;
 }
 
 body {

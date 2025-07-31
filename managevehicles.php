@@ -36,15 +36,24 @@ include "./databases.php";
     <body>
         <main>
             <div class="navbar" role="navigation">
-                <a class="button" role="button" href="index.php">Back</a>
+                <a class="button" role="button" href="management.php">Back</a>
             </div>
             <h1>Portal</h1>
             <h2>Manage Vehicles</h2>
+            <?php
+            $user_database = load_database("users");
+            if ($portal_config["payment"]["enabled"] == false) {
+                $max_vehicles = "∞";
+            } else if (time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0) {
+                $max_vehicles = $user_database[$username]["payment"]["vehicles"]["count"];
+            } else {
+                $max_vehicles = "0";
+            }
+            echo "<p>" . sizeof($user_database[$username]["vehicles"]) . "/" . $max_vehicles . " vehicles registered</p>";
+            ?>
             <hr>
 
             <?php
-            $user_database = load_database("users");
-
             if (in_array($_GET["delete"], array_keys($user_database[$username]["vehicles"]))) {
                 if (time() - intval($_GET["confirm"]) < 0) {
                     echo "<p> class=\"error\">The confirmation timestamp is in the future. If you clicked an external link to get here, it's possible someone is trying to trick you into a deleting a vehicle.</p>";
@@ -60,7 +69,7 @@ include "./databases.php";
                     echo $vehicle_persistent_directory;
                     if (is_dir($vehicle_persistent_directory)) {
                         if (delete_directory($vehicle_persistent_directory) == false) {
-                            echo "<p class=\"error\">Failed to remove the persistent vehicle directory. This is likely a server-side issue, so consider contact customer support.</p>";
+                            echo "<p class=\"error\">Failed to remove the persistent vehicle directory. This is likely a server-side issue, so consider contacting customer support.</p>";
                             exit();
                         }
                     }
@@ -68,7 +77,7 @@ include "./databases.php";
                     echo $vehicle_volatile_directory;
                     if (is_dir($vehicle_volatile_directory)) {
                         if (delete_directory($vehicle_volatile_directory) == false) {
-                            echo "<p class=\"error\">Failed to remove the volatile vehicle directory. This is likely a server-side issue, so consider contact customer support.</p>";
+                            echo "<p class=\"error\">Failed to remove the volatile vehicle directory. This is likely a server-side issue, so consider contacting customer support.</p>";
                             exit();
                         }
                     }
@@ -128,19 +137,24 @@ include "./databases.php";
                     $valid = false;
                 }
 
-                if ($valid == true) {
-                    $user_database[$username]["vehicles"][$new_id] = array();
-                    $user_database[$username]["vehicles"][$new_id]["name"] = $name;
-                    $user_database[$username]["vehicles"][$new_id]["year"] = $year;
-                    $user_database[$username]["vehicles"][$new_id]["make"] = $make;
-                    $user_database[$username]["vehicles"][$new_id]["model"] = $model;
-                    $user_database[$username]["vehicles"][$new_id]["vin"] = $vin;
+                if ((time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0 and sizeof($user_database[$username]["vehicles"]) < $user_database[$username]["payment"]["vehicles"]["count"]) or $portal_config["payment"]["enabled"] == false) {
+                    if ($valid == true) {
+                        $user_database[$username]["vehicles"][$new_id] = array();
+                        $user_database[$username]["vehicles"][$new_id]["name"] = $name;
+                        $user_database[$username]["vehicles"][$new_id]["year"] = $year;
+                        $user_database[$username]["vehicles"][$new_id]["make"] = $make;
+                        $user_database[$username]["vehicles"][$new_id]["model"] = $model;
+                        $user_database[$username]["vehicles"][$new_id]["vin"] = $vin;
 
-                    save_database("users", $user_database);
-                    echo "<p>The new vehicle was successfully created.</p>";
-                    echo "<hr style=\"width:100px;\">";
+                        save_database("users", $user_database);
+                        echo "<p>The new vehicle was successfully created.</p>";
+                        echo "<hr style=\"width:100px;\">";
+                    } else {
+                        echo "<p class='error'>The configuration was not updated.</p>";
+                        echo "<hr style=\"width:100px;\">";
+                    }
                 } else {
-                    echo "<p class='error'>The configuration was not updated.</p>";
+                    echo "<p class=\"error\">A problem was encountered while registering your new vehicle. You've either exceeded the number of allowed vehicles for your subscription, or your subscription is invalid.  If you'd like to increase the number of vehicles you can register, please visit the <a href=\"./managepayments.php\">payment management</a> page, cancel your existing subscription, then create a new subscription with an increased quantity during check out.</p>";
                     echo "<hr style=\"width:100px;\">";
                 }
             } else if ($_POST["submit"] == "Edit") {
@@ -215,7 +229,7 @@ include "./databases.php";
             </form>
             <h3>New Vehicle</h3>
             <?php
-            if (time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0 and sizeof($user_database[$username]["vehicles"]) < $user_database[$username]["payment"]["vehicles"]["count"]) {
+            if ((time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0 and sizeof($user_database[$username]["vehicles"]) < $user_database[$username]["payment"]["vehicles"]["count"]) or $portal_config["payment"]["enabled"] == false) {
                 echo "<form method=\"POST\">";
                 echo "<label for=\"vehicle>new>name\">Name</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>name\" id=\"vehicle>new>name\" placeholder=\"Recognizable Nickname\" required><br><br>";
                 echo "<label for=\"vehicle>new>year\">Year</label>: <input type=\"number\" step=\"1\" min=\"1900\" max=\"" . intval(date("Y"))+1 . "\" name=\"vehicle>new>year\" id=\"vehicle>new>year\" placeholder=\"2014\"><br>";

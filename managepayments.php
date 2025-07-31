@@ -36,18 +36,23 @@ include "./databases.php";
     <body>
         <main>
             <div class="navbar" role="navigation">
-                <a class="button" role="button" href="index.php">Back</a>
+                <a class="button" role="button" href="management.php">Back</a>
             </div>
             <h1>Portal</h1>
             <h2>Manage Payments</h2>
             <hr>
 
             <?php
-            echo "<p>Use the button below to cancel or update existing recurring payments.</p>";
-            echo "<a class=\"button\" href=\"" . $portal_config["payment"]["stripe"]["link"]["management"] . "\">Manage Payments</a><br>";
-            $user_database = load_database("users");
+            if ($portal_config["payment"]["enabled"] == true) {
+                echo "<p>Use the button below to cancel or update existing recurring payments.</p>";
+                echo "<a class=\"button\" href=\"" . $portal_config["payment"]["stripe"]["link"]["management"] . "\">Manage Payments</a><br>";
+                $user_database = load_database("users");
 
-            echo "<p><i>Unless cancelled, subscriptions auto-renew every month.</i></p>";
+                echo "<p><i>Unless cancelled, subscriptions auto-renew every month.</i></p>";
+            } else {
+                echo "<p>Payments have been disabled on this instance.</p>";
+                exit();
+            }
             ?>
 
             <hr style="width:80%">
