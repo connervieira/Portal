@@ -39,7 +39,7 @@ if (is_file($filepath)) {
     $trackpoints = load_location_file($filepath)["track"];
     $gpx = locations_to_gpx($trackpoints);
     header('Content-Disposition: attachment; filename="' . $filename . '.gpx"');
-    header('Content-Type: text/plain');
+    header('Content-Type: application/gpx+xml');
     header('Content-Length: ' . strlen($gpx));
     header('Connection: close');
     echo $gpx;

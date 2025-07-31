@@ -476,7 +476,7 @@ function storage_capacity($user, $user_database) {
     global $portal_config;
 
     $storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
-    if (in_array("payment", array_keys($user_database[$user])) == true and time() - $user_database[$user]["payment"]["storage"]["expiration"] < 0) {
+    if (in_array($user, array_keys($user_database)) and in_array("payment", array_keys($user_database[$user])) == true and time() - $user_database[$user]["payment"]["storage"]["expiration"] < 0) {
         $storage_capacity += $user_database[$user]["payment"]["storage"]["capacity_gb"]*1000*1000*1000; // Calculate the max file capacity in bytes.
     }
     return $storage_capacity;
@@ -503,8 +503,8 @@ function locations_to_gpx($locations) {
     foreach ($locations as $timestamp => $point) {
         $lat = $point["lat"];
         $lon = $point["lon"];
-        $alt = $point["alt"];
-        $spd = $point["spd"];
+        $alt = intval($point["alt"]);
+        $spd = intval($point["spd"]);
         $head = $point["head"];
         $time = gmdate('Y-m-d\TH:i:s.u\Z', $timestamp);
         if ($lat != 0 and $lon != 0 and $lat != null and $lon != null) {
