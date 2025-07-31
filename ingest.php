@@ -26,8 +26,10 @@ if ($associated_user == false) {
     // Check to see if it has been at least 10 seconds since the last submission:
     $point_time = intval($data["location"]["time"]);
     $time_since_previous_submission = time_since_previous_timestamp($point_time, list_all_timestamps($vehicle, $user_database));
-    if ($time_since_previous_submission < 9.9) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
-        echo "{\"success\": false, \"type\": \"client\", \"code\": \"premature_submission\", \"reason\": \"There must be a minimum of 10 seconds between submissions.\"}";
+    if ($time_since_previous_submission == 0) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
+        echo "{\"success\": false, \"type\": \"client\", \"code\": \"duplicate_submission\", \"reason\": \"The submission matches the timestamp of a different submission exactly.\"}";
+    } else if ($time_since_previous_submission < 9.9) { // Check to see if it has been less than 10 seconds since the last submission (plus a marging of error).
+        echo "{\"success\": false, \"type\": \"client\", \"code\": \"premature_submission\", \"reason\": \"There must be a minimum of 10 seconds between submissions ($time_since_previous_submission).\"}";
         exit();
     }
 
