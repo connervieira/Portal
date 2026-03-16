@@ -162,16 +162,76 @@ function load_track_last_n_days($vehicle, $days, $user_database) {
     return $complete_track;
 }
 
+// This function returns the GPS log from a specific filepath (ex: "/var/www/protected/portal/tracks/cvieira/4721fa4e0c58dba102274da8/2025-03-08 UTC.json").
+function load_location_file($filepath) {
+    if (is_file($filepath)) {
+        $file_contents = file_get_contents($filepath);
+        return json_decode($file_contents, true);
+    } else {
+        return false;
+    }
+}
+
+
+# This function returns the timestamps associated with all track points for a given vehicle.
+function list_all_timestamps($vehicle, $user_database) {
+    $all_location_files = list_gps_track_files($vehicle, $user_database);
+
+    $timestamps = array();
+
+    $complete_track = array(); // This will hold every location point from the relevant files.
+    foreach ($all_location_files as $file) {
+        $file_contents = file_get_contents($file);
+        $trackpoints = json_decode($file_contents, true);
+        foreach (array_keys($trackpoints["track"]) as $timestamp) {
+            array_push($timestamps, $timestamp);
+        }
+    }
+
+    return $timestamps;
+}
+
+
+// This function takes a given timestamp, and an array of timestamps, and returns the time since the previous timestamp. (45 with 20, 30, 40, 50, 60, 70 -> 45-40 = 5 seconds)
+function time_since_previous_timestamp($timestamp, $timestamps) {
+    asort($timestamps);
+    $last_timestamp = 0;
+    foreach ($timestamps as $entry) {
+        if ($entry > $timestamp) {
+            break;
+        }
+        $last_timestamp = $entry;
+    }
+    return $timestamp - $last_timestamp;
+}
+
 // This function returns the last known location of a given vehicle.
 function most_recent_vehicle_location($vehicle, $user_database) {
-    $all_location_files = list_gps_track_files($vehicle, $user_database);
-    $last_file = end($all_location_files);
+    $all_location_files = list_gps_track_files($vehicle, $user_database); // Get a list of all location track files.
+    $last_file = end($all_location_files); // Get the most recent location track file.
     if (strlen($last_file) == 0) { return false; } // Return 'false' if there are no files to read.
-    $trackpoints = json_decode(file_get_contents($last_file), true);
-    ksort($trackpoints["track"]);
-    $final_trackpoint = end(array_keys($trackpoints["track"]));
-    $trackpoints["track"][$final_trackpoint]["time"] = $final_trackpoint;
-    return $trackpoints["track"][$final_trackpoint];
+    $trackpoints = json_decode(file_get_contents($last_file), true); // Open the most recent location track file.
+    ksort($trackpoints["track"]); // Ensure the location trackpoints are in order of timestamp (which is the key).
+    $final_trackpoint = end(array_keys($trackpoints["track"])); // Get the last point in this file.
+    $trackpoints["track"][$final_trackpoint]["time"] = $final_trackpoint; // Add the timestamp of this point to it's data before returning.
+
+    $location = $trackpoints["track"][$final_trackpoint];
+    if ($location["lat"] == null) {
+        $location["lat"] = 0;
+    }
+    if ($location["lon"] == null) {
+        $location["lon"] = 0;
+    }
+    if ($location["alt"] == null) {
+        $location["alt"] = 0;
+    }
+    if ($location["spd"] == null) {
+        $location["spd"] = 0;
+    }
+    if ($location["head"] == null) {
+        $location["head"] = -1;
+    }
+    return $location;
 }
 
 // This function returns a list of vehicle ID's that have been active in the past N seconds.
@@ -222,15 +282,22 @@ function online_vehicles($seconds, $user_database, $user) {
 }
 
 
-// This function calculates the utilization percentage (time spent moving / time spent stopped) for a given vehicle over the past number of days.
-function calculate_vehicle_utilization($vehicle, $days, $user_database) {
+
+
+// This function calculates the number of minutes a specific vehicle has spent actively moving.
+function calculate_vehicle_active_minutes($vehicle, $days, $user_database) {
     $track = load_track_last_n_days($vehicle, $days, $user_database);
     $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
+
+    $earliest_timestamp = time() - ($total_minutes*60); // This is the earliest datapoint timestamp we will consider, since anything before this falls outside of the time interval.
 
     $active_minutes = 0;
     $previous_timestamp = 0;
     $previous_location = array();
     foreach (array_keys($track) as $timestamp) {
+        if ($timestamp < $earliest_timestamp) { // Check to see if this timestamp is before the earliest we should consider.
+            continue; // Skip this datapoint.
+        }
         $time_difference = $timestamp - $previous_timestamp;
         if ($time_difference <= 2 * 60) { // Check to see if this timestamp is within a certain number of minutes of the previous timestamp.
             if (in_array("lat", array_keys($previous_location)) and in_array("lon", array_keys($previous_location))) {
@@ -246,7 +313,54 @@ function calculate_vehicle_utilization($vehicle, $days, $user_database) {
         $previous_timestamp = $timestamp;
         $previous_location = $track[$timestamp];
     }
+    return $active_minutes;
+}
+
+
+// This function calculates the utilization percentage (time spent moving / time spent stopped) for a given vehicle over the past number of days.
+function calculate_vehicle_utilization($vehicle, $days, $user_database) {
+    $track = load_track_last_n_days($vehicle, $days, $user_database);
+    $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
+
+    $earliest_timestamp = time() - ($total_minutes*60); // This is the earliest datapoint timestamp we will consider, since anything before this falls outside of the time interval.
+
+    $active_minutes = calculate_vehicle_active_minutes($vehicle, $days, $user_database);
+
     return $active_minutes / $total_minutes;
+}
+
+
+
+// This function calculates the number of minutes a specific vehicle has spent idling.
+function calculate_vehicle_idle_minutes($vehicle, $days, $user_database) {
+    $track = load_track_last_n_days($vehicle, $days, $user_database);
+    $total_minutes = $days * 24 * 60; // Calculate the total number of minutes in this interval.
+
+    $earliest_timestamp = time() - ($total_minutes*60); // This is the earliest datapoint timestamp we will consider, since anything before this falls outside of the time interval.
+
+    $idle_minutes = 0;
+    $previous_timestamp = 0;
+    $previous_location = array();
+    foreach (array_keys($track) as $timestamp) { // Iterate over each location point in this track.
+        if ($timestamp < $earliest_timestamp) { // Check to see if this timestamp is before the earliest we should consider.
+            continue; // Skip this datapoint.
+        }
+        $time_difference = $timestamp - $previous_timestamp;
+        if ($time_difference <= 1 * 60) { // Check to see if this timestamp is within a certain number of minutes of the previous timestamp.
+            if (in_array("lat", array_keys($previous_location)) and in_array("lon", array_keys($previous_location))) {
+                if (($previous_location["lat"] != 0.0 or $previous_location["lon"]) != 0.0 and ($track[$timestamp]["lat"] != 0.0 or $track[$timestamp]["lon"] != 0.0)) { // Make sure neither of the coordinates are null.
+                    $distance = calculate_distance($previous_location["lat"], $previous_location["lon"], $track[$timestamp]["lat"], $track[$timestamp]["lon"]);
+                    $speed = $distance/$time_difference; // Calculate the speed in meters per second.
+                    if ($speed < 1) { // Check to see if the vehicle speed is below a reasonable threshold.
+                        $idle_minutes += $time_difference/60;
+                    }
+                }
+            }
+        }
+        $previous_timestamp = $timestamp;
+        $previous_location = $track[$timestamp];
+    }
+    return $idle_minutes;
 }
 
 // This function calculates the total distance driven by a given vehicle over the past number of days.
@@ -289,7 +403,7 @@ function calculate_vehicle_distance_total($user, $days, $user_database) {
 // This function returns the most recent image for a given vehicle and camera encoded in base64.
 function fetch_camera_preview($vehicle, $user, $device) {
     global $portal_config;
-    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $user, $vehicle, $device. ".jpg"]);
+    $image_location = join_paths([$portal_config["databases"]["vehicles"]["location"], $user, $vehicle, $device . ".jpg"]);
     if (file_exists($image_location)) {
         $image_data = "data:image/jpg;base64," . base64_encode(file_get_contents($image_location));
         return $image_data;
@@ -311,6 +425,20 @@ function get_location_storage_usage_total($user, $user_database) {
     return $total_usage;
 }
 
+// This function returns the location track file storage usage for the largest vehicle for a given user in bytes.
+function get_location_storage_usage_largest($user, $user_database) {
+    $max_usage = 0; // This is a placeholder that will be replaced with the largest vehicle storage usage value.
+    $largest_vehicle = ""; // This will be replaced with the vehicle ID with the largest storage usage.
+    foreach (array_keys($user_database[$user]["vehicles"]) as $vehicle) {
+        $vehicle_usage = get_location_storage_usage_vehicle($vehicle, $user_database);
+        if ($vehicle_usage > $max_usage) {
+            $largest_vehicle = $vehicle;
+            $max_usage = $vehicle_usage;
+        }
+    }
+    return array($largest_vehicle, $max_usage);
+}
+
 // This function returns the GPS location track file storage usage for a particular vehicle.
 function get_location_storage_usage_vehicle($vehicle, $user_database) {
     $total_usage = 0; // This is a placeholder that will be incremented to keep track of the total disk usage.
@@ -319,5 +447,80 @@ function get_location_storage_usage_vehicle($vehicle, $user_database) {
         $total_usage += filesize($file);
     }
     return $total_usage;
+}
+
+
+
+// This function translates a widget type to a human-friendly title ("vehicle_count" -> "Vehicle Count").
+function widget_type_to_name($type) {
+    $words = explode("_", $type);
+    $title = implode(" ", $words);
+    $capitalized = ucwords($title);
+    return $capitalized;
+}
+
+
+
+// This function deletes a directory and any files it contains. (code by: nbari@dalmp.com)
+function delete_directory($dir) {
+    $files = array_diff(scandir($dir), array('.','..'));
+    foreach ($files as $file) {
+        (is_dir("$dir/$file")) ? delete_directory("$dir/$file") : unlink("$dir/$file");
+    }
+    return rmdir($dir);
+}
+
+
+// This function returns the max allowed file capacity for a given user (per vehicle).
+function storage_capacity($user, $user_database) {
+    global $portal_config;
+
+    $storage_capacity = $portal_config["storage"]["gps_tracks"]["default_capacity"]*1000*1000*1000; // Calculate the max file capacity in bytes.
+    if (in_array($user, array_keys($user_database)) and in_array("payment", array_keys($user_database[$user])) == true and time() - $user_database[$user]["payment"]["storage"]["expiration"] < 0) {
+        $storage_capacity += $user_database[$user]["payment"]["storage"]["capacity_gb"]*1000*1000*1000; // Calculate the max file capacity in bytes.
+    }
+    return $storage_capacity;
+}
+
+
+
+// This function checks to see if an account is in good standing financially (the subscription is not expired, and the vehicle count is within quota).
+function is_account_in_good_standing($user, $user_database) {
+    if ($portal_config["payment"]["enabled"] == false) {
+        return true;
+    } else if ($user_database[$user]["payment"]["vehicles"]["expiration"] >= time() and sizeof(array_keys($user[$username]["vehicles"])) <= $user_database[$username]["payment"]["vehicles"]["count"]) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+
+// This function takes a dictionary of trackpoints (with the timestamp as the key) and returns a GPX string of the data.
+function locations_to_gpx($locations) {
+    $gpx_string = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><gpx version=\"1.0\" creator=\"V0LT Portal\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/0\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\"><trk><trkseg>";
+    foreach ($locations as $timestamp => $point) {
+        $lat = $point["lat"];
+        $lon = $point["lon"];
+        $alt = intval($point["alt"]);
+        $spd = intval($point["spd"]);
+        $head = $point["head"];
+        $time = gmdate('Y-m-d\TH:i:s.u\Z', $timestamp);
+        if ($lat != 0 and $lon != 0 and $lat != null and $lon != null) {
+            $line = "<trkpt lat=\"" . $lat . "\" lon=\"" . $lon . "\">";
+            $line .= "<ele>" . $alt . "</ele>";
+            $line .= "<time>" . $time . "</time>";
+            $line .= "<course>" . $dir . "</course>";
+            $line .= "<speed>" . $spd . "</speed>";
+            $line .= "<src>gps</src>";
+            $line .= "</trkpt>";
+            $gpx_string .= $line;
+        }
+    }
+    $gpx_string .= "</trkseg></trk></gpx>";
+
+    return $gpx_string;
+
 }
 ?>

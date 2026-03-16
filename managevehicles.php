@@ -36,26 +36,57 @@ include "./databases.php";
     <body>
         <main>
             <div class="navbar" role="navigation">
-                <a class="button" role="button" href="index.php">Back</a>
+                <a class="button" role="button" href="management.php">Back</a>
             </div>
             <h1>Portal</h1>
             <h2>Manage Vehicles</h2>
+            <?php
+            $user_database = load_database("users");
+            if ($portal_config["payment"]["enabled"] == false) {
+                $max_vehicles = "∞";
+            } else if (time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0) {
+                $max_vehicles = $user_database[$username]["payment"]["vehicles"]["count"];
+            } else {
+                $max_vehicles = "0";
+            }
+            echo "<p>" . sizeof($user_database[$username]["vehicles"]) . "/" . $max_vehicles . " vehicles registered</p>";
+            ?>
             <hr>
 
             <?php
-            $user_database = load_database("users");
-
             if (in_array($_GET["delete"], array_keys($user_database[$username]["vehicles"]))) {
                 if (time() - intval($_GET["confirm"]) < 0) {
                     echo "<p> class=\"error\">The confirmation timestamp is in the future. If you clicked an external link to get here, it's possible someone is trying to trick you into a deleting a vehicle.</p>";
                     echo "<hr style=\"width:100px;\">";
                 } else if (time() - intval($_GET["confirm"]) <= 30) {
                     unset($user_database[$username]["vehicles"][$_GET["delete"]]);
+                    foreach ($user_database[$username]["widgets"] as $index => $widget) { // Iterate over each widget to remove any that are associated with this vehicle.
+                        if (in_array("vehicle", array_keys($widget)) and $widget["vehicle"] == $_GET["delete"]) {
+                            unset($user_database[$username]["widgets"][$index]);
+                        }
+                    }
+                    $vehicle_persistent_directory = join_paths([$portal_config["storage"]["gps_tracks"]["location"], $username, $_GET["delete"]]);
+                    echo $vehicle_persistent_directory;
+                    if (is_dir($vehicle_persistent_directory)) {
+                        if (delete_directory($vehicle_persistent_directory) == false) {
+                            echo "<p class=\"error\">Failed to remove the persistent vehicle directory. This is likely a server-side issue, so consider contacting customer support.</p>";
+                            exit();
+                        }
+                    }
+                    $vehicle_volatile_directory = join_paths([$portal_config["databases"]["vehicles"]["location"], $username, $_GET["delete"]]);
+                    echo $vehicle_volatile_directory;
+                    if (is_dir($vehicle_volatile_directory)) {
+                        if (delete_directory($vehicle_volatile_directory) == false) {
+                            echo "<p class=\"error\">Failed to remove the volatile vehicle directory. This is likely a server-side issue, so consider contacting customer support.</p>";
+                            exit();
+                        }
+                    }
                     save_database("users", $user_database);
                     header("Location: ./managevehicles.php");
+                    exit();
                 } else {
-                    echo "<p>Are you sure you would like to delete <b>" . $_GET["delete"] . "</b>.</p>";
-                    echo "<a class=\"button\" href=\"?delete=" . $_GET["delete"] . "&confirm=" . time() . "\">Delete</a> <a class=\"button\" href=\"managevehicles.php\">Back</a>";
+                    echo "<p>Are you sure you would like to delete <b>" . $user_database[$username]["vehicles"][$_GET["delete"]]["name"] . " (" . $_GET["delete"] . ")</b>? This will permanently erase all data associated with this vehicle, including location history and maintenance information.</p>";
+                    echo "<a class=\"button\" href=\"?delete=" . $_GET["delete"] . "&confirm=" . time() . "\">Delete</a> <a class=\"button\" href=\"managevehicles.php\">Cancel</a>";
                     echo "<hr style=\"width:100px;\">";
                 }
             } else if ($_POST["submit"] == "Create") {
@@ -106,19 +137,24 @@ include "./databases.php";
                     $valid = false;
                 }
 
-                if ($valid == true) {
-                    $user_database[$username]["vehicles"][$new_id] = array();
-                    $user_database[$username]["vehicles"][$new_id]["name"] = $name;
-                    $user_database[$username]["vehicles"][$new_id]["year"] = $year;
-                    $user_database[$username]["vehicles"][$new_id]["make"] = $make;
-                    $user_database[$username]["vehicles"][$new_id]["model"] = $model;
-                    $user_database[$username]["vehicles"][$new_id]["vin"] = $vin;
+                if ((time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0 and sizeof($user_database[$username]["vehicles"]) < $user_database[$username]["payment"]["vehicles"]["count"]) or $portal_config["payment"]["enabled"] == false) {
+                    if ($valid == true) {
+                        $user_database[$username]["vehicles"][$new_id] = array();
+                        $user_database[$username]["vehicles"][$new_id]["name"] = $name;
+                        $user_database[$username]["vehicles"][$new_id]["year"] = $year;
+                        $user_database[$username]["vehicles"][$new_id]["make"] = $make;
+                        $user_database[$username]["vehicles"][$new_id]["model"] = $model;
+                        $user_database[$username]["vehicles"][$new_id]["vin"] = $vin;
 
-                    save_database("users", $user_database);
-                    echo "<p>The new vehicle was successfully created.</p>";
-                    echo "<hr style=\"width:100px;\">";
+                        save_database("users", $user_database);
+                        echo "<p>The new vehicle was successfully created.</p>";
+                        echo "<hr style=\"width:100px;\">";
+                    } else {
+                        echo "<p class='error'>The configuration was not updated.</p>";
+                        echo "<hr style=\"width:100px;\">";
+                    }
                 } else {
-                    echo "<p class='error'>The configuration was not updated.</p>";
+                    echo "<p class=\"error\">A problem was encountered while registering your new vehicle. You've either exceeded the number of allowed vehicles for your subscription, or your subscription is invalid.  If you'd like to increase the number of vehicles you can register, please visit the <a href=\"./managepayments.php\">payment management</a> page, cancel your existing subscription, then create a new subscription with an increased quantity during check out.</p>";
                     echo "<hr style=\"width:100px;\">";
                 }
             } else if ($_POST["submit"] == "Edit") {
@@ -130,6 +166,7 @@ include "./databases.php";
                     $year = intval($_POST["vehicle>" . $id . ">year"]);
                     $make = $_POST["vehicle>" . $id . ">make"];
                     $model = $_POST["vehicle>" . $id . ">model"];
+                    $vin = strtoupper($_POST["vehicle>" . $id . ">vin"]);
 
                     if (strlen($name) > 100 or $name !== preg_replace("/[^a-zA-Z0-9\- \/'\(\).,]/", "", $name)) {
                         echo "<p class=\"error\">The supplied vehicle nickname for \"" . substr($id, 0, 8) . "...\" is invalid.</p>";
@@ -147,12 +184,17 @@ include "./databases.php";
                         echo "<p class=\"error\">The supplied vehicle model for \"" . substr($id, 0, 8) . "...\" is invalid.</p>";
                         $valid = false; $all_valid = false;
                     }
+                    if (strlen($vin) > 30 or $vin !== preg_replace("/[^A-Z0-9]/", "", $vin)) {
+                        echo "<p class=\"error\">The supplied vehicle VIN for \"" . substr($id, 0, 8) . "...\" is invalid.</p>";
+                        $valid = false; $all_valid = false;
+                    }
 
                     if ($valid == true) {
                         $user_database[$username]["vehicles"][$id]["name"] = $name;
                         $user_database[$username]["vehicles"][$id]["year"] = $year;
                         $user_database[$username]["vehicles"][$id]["make"] = $make;
                         $user_database[$username]["vehicles"][$id]["model"] = $model;
+                        $user_database[$username]["vehicles"][$id]["vin"] = $vin;
                     }
 
                 }
@@ -178,25 +220,33 @@ include "./databases.php";
                     echo "<label for=\"vehicle>$id>year\">Year</label>: <input type=\"number\" step=\"1\" min=\"1900\" max=\"" . intval(date("Y"))+1 . "\" name=\"vehicle>$id>year\" id=\"vehicle>$id>year\" placeholder=\"2014\" value=\""; if ($vehicle["year"] !== 0) { echo $vehicle["year"]; } echo "\"><br>";
                     echo "<label for=\"vehicle>$id>make\">Make</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>$id>make\" id=\"vehicle>$id>make\" placeholder=\"Toyota\" value=\"" . $vehicle["make"] . "\"><br>";
                     echo "<label for=\"vehicle>$id>model\">Model</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>$id>model\" id=\"vehicle>$id>model\" placeholder=\"Camry\" value=\"". $vehicle["model"] . "\"><br>";
-                    echo "<label for=\"vehicle>$id>vin\">VIN</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9]+\" max=\"20\" name=\"vehicle>$id>vin\" id=\"vehicle>$id>vin\" placeholder=\"Vehicle Identification Number\">";
+                    echo "<label for=\"vehicle>$id>vin\">VIN</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9]+\" max=\"20\" name=\"vehicle>$id>vin\" id=\"vehicle>$id>vin\" placeholder=\"Vehicle Identification Number\" value=\"" . $vehicle["vin"] . "\">";
                     echo "<br><a class=\"button\" href=\"?delete=$id\">Delete</a> ";
                     echo "<input class=\"button\" type=\"submit\" id=\"submit\" name=\"submit\" value=\"Edit\"><br>";
                     echo "<hr style=\"width:100px;\">";
                 }
                 ?>
             </form>
-            <form method="POST">
-                <h3>New Vehicle</h3>
-                <?php
+            <h3>New Vehicle</h3>
+            <?php
+            if ((time() - $user_database[$username]["payment"]["vehicles"]["expiration"] < 0 and sizeof($user_database[$username]["vehicles"]) < $user_database[$username]["payment"]["vehicles"]["count"]) or $portal_config["payment"]["enabled"] == false) {
+                echo "<form method=\"POST\">";
                 echo "<label for=\"vehicle>new>name\">Name</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>name\" id=\"vehicle>new>name\" placeholder=\"Recognizable Nickname\" required><br><br>";
                 echo "<label for=\"vehicle>new>year\">Year</label>: <input type=\"number\" step=\"1\" min=\"1900\" max=\"" . intval(date("Y"))+1 . "\" name=\"vehicle>new>year\" id=\"vehicle>new>year\" placeholder=\"2014\"><br>";
                 echo "<label for=\"vehicle>new>make\">Make</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>make\" id=\"vehicle>new>make\" placeholder=\"Manufacturer\"><br>";
                 echo "<label for=\"vehicle>new>model\">Model</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9\- \/'\(\).,]+\" max=\"100\" name=\"vehicle>new>model\" id=\"vehicle>new>model\" placeholder=\"Camry\"><br>";
                 echo "<label for=\"vehicle>new>vin\">VIN</label>: <input type=\"text\" pattern=\"[a-zA-Z0-9]+\" max=\"20\" name=\"vehicle>new>vin\" id=\"vehicle>new>vin\" placeholder=\"Vehicle Identification Number\"><br>";
-                ?>
-
-                <br><input class="button" type="submit" id="submit" name="submit" value="Create">
-            </form>
+                echo "<br><input class=\"button\" type=\"submit\" id=\"submit\" name=\"submit\" value=\"Create\">";
+                echo "</form>";
+            } else if ($user_database[$username]["payment"]["vehicles"]["count"] == 0 and sizeof($user_database[$username]["vehicles"]) == 0) {
+                echo "<p>You don't currently have an active subscription. Visit the <a href=\"./managepayments.php\">payment management</a> page to purchase a subscription to track one or more vehicles.</p>";
+                echo "<p>For a 3 month free trial, use promo-code TRYPORTAL90 with as many vehicles as you need. Don't hestitate to <a href=\"" . $portal_config["contact"]["link"] . "\">contact V0LT</a> with any questions!</a>";
+            } else if (time() - $user_database[$username]["payment"]["vehicles"]["expiration"] >= 0) {
+                echo "<p>Your subscription has expired! Please visit the <a href=\"./managepayments.php\">payment management</a> page to renew your subscription.</p>";
+            } else if (sizeof($user_database[$username]["vehicles"]) >= $user_database[$username]["payment"]["vehicles"]["count"]) {
+                echo "<p>You have used the maximum quantity of vehicles for your subscription! If you'd like to increase the number of vehicles you can register, please visit the <a href=\"./managepayments.php\">payment management</a> page, cancel your existing subscription, then create a new subscription with an increased quantity during check out.</p>";
+            }
+            ?>
         </main>
     </body>
 </html>
