@@ -60,7 +60,12 @@ if (in_array($vehicle, array_keys($user_database[$username]["vehicles"])) == fal
             if (is_file($filepath)) {
                 $trackpoints = load_location_file($filepath)["track"];
                 if (sizeof($trackpoints) > 0) {
-                    $first_datapoint = reset($trackpoints);
+                    foreach ($trackpoints as $trackpoint) { // Iterate through each point until we reach the first non-zero trackpoint.
+                        if ($trackpoint["lat"] != 0 and $trackpoint["lon"] != 0 and $trackpoint["lat"] != null and $trackpoint["lon"] != null) { // Check to see if this location point is non-null/non-zero.
+                            $first_datapoint = $trackpoint;
+                            break;
+                        }
+                    }
                     echo "<div id=\"map\" style=\"margin-top:50px;height:500px;width:100%;\"></div>";
                     echo "<script>
                         const map = L.map('map').setView([" . floatval($first_datapoint["lat"]) . ", " . floatval($first_datapoint["lon"]) . "], 12);
